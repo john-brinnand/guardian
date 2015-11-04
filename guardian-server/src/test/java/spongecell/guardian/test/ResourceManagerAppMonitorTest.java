@@ -20,7 +20,6 @@ import org.testng.annotations.Test;
 
 import spongecell.guardian.agent.yarn.ResourceManagerAppMonitor;
 import spongecell.guardian.agent.yarn.ResourceManagerAppMonitorConfiguration.RunStates;
-import spongecell.guardian.agent.yarn.YarnResourceManagerAgent;
 import spongecell.guardian.agent.yarn.model.ResourceManagerAppStatus;
 import spongecell.guardian.agent.yarn.model.ResourceManagerEvent;
 import spongecell.guardian.handler.KieMemoryFileSystemSessionHandler;

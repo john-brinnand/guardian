@@ -1,7 +1,6 @@
 package spongecell.guardian.test;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeoutException;
 
 import lombok.extern.slf4j.Slf4j;

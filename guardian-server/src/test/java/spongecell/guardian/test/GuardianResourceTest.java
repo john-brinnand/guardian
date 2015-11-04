@@ -60,8 +60,8 @@ public class GuardianResourceTest extends AbstractTestNGSpringContextTests {
 		ResultActions actions = mockMvc.perform(request);
 		actions.andDo(print());
 
-		// Get the result and convert it to an AudienceResponse.
-		// *******************************************************
+		// Get the result and convert it to a Response.
+		// ********************************************
 		MvcResult mvcResult = actions.andReturn();
 
 		log.info("Raw Response - type is {} content is: {} ", mvcResult
@@ -95,7 +95,7 @@ public class GuardianResourceTest extends AbstractTestNGSpringContextTests {
 				.getContentAsString());
 		
 		Assert.assertEquals(mvcResult.getResponse().getContentAsString(),
-				"Agent " + agentId + "has been scheduled to run.");
+				"Agent " + agentId + " has been scheduled to run.");
 		
 		Thread.sleep(90000);
 	}	
