@@ -1,0 +1,122 @@
+package spongecell.guardian.rules.core
+ 
+import spongecell.guardian.model.HDFSDirectory 
+import spongecell.guardian.notification.SimpleMailClient 
+import spongecell.guardian.notification.GuardianEvent 
+import spongecell.guardian.notification.SlackGuardianWebHook  
+
+/*
+ * This rule checks that the number of files in a directory.
+ */
+dialect "mvel"
+
+rule "1 HDFS Heston Status Check"
+    when
+        $hdfsDir1 : HDFSDirectory(statusCheck == HDFSDirectory.FILE_CHECK_UNKNOWN) 
+    then
+        System.out.println("HDFSDirectory Status Check - statusCheck: " + 
+        	$hdfsDir1.statusCheck);
+end
+
+/*
+ * This rule checks the number of children in the filesystem.
+ */ 
+dialect "java"
+
+rule "2 HDFS Heston Children Check"
+    when
+    	// This condition must come first or the 
+    	// rule will go into an infinite loop.
+    	//***************************************
+        $mailClient : SimpleMailClient(valid == true)
+        $hdfsDir : HDFSDirectory(numChildren == 2)               
+    then
+        System.out.println("Health check passed: Number of children is: " + 
+        	$hdfsDir.numChildren);
+        	
+        // This action changes a fact and will, therefore
+        // cause the rule to fire. To prevent this from 
+        // happening, the valid flag is set to false.
+        //***********************************************
+        modify( $mailClient ) { 
+        	setSendMail( Boolean.TRUE ),  
+        	setValid( Boolean.FALSE),
+        	setMessage ($hdfsDir.getFileStatus())
+        };
+        System.out.println("Health check passed. SimpleMailClient.sendMail is: " + 
+        	$mailClient.sendMail);
+end
+
+/*
+ * This rule checks if a notification should be sent out. This
+ * decision is made depending on the sendMail flag, set by Rule 2. 
+ * If it is set to true, an email is set out to interested parties.
+ */
+
+dialect "mvel"
+
+rule "3 MailClient Notifier"
+    when
+        $event : GuardianEvent(valid == true)
+        $hdfsDir1 : HDFSDirectory(numChildren == 2) 
+        $sendMailClient : SimpleMailClient(sendMail == Boolean.TRUE)
+    then
+        $hdfsDir1.getExcelFileStatusWorkBook();
+        modify( $event ) { 
+        	setSource(drools.getRule().getName()),	
+        	setManagedObject($hdfsDir1.getTargetDir()),
+        	setEventSeverity("INFORMATIONAL"),	
+        	setBody($hdfsDir1.getFileStatus()),
+        	setValid(Boolean.FALSE)
+        }
+        System.out.println("Sending notifications:");
+        $sendMailClient.sendExcelAttachment($event.getMessage(), $hdfsDir1.getExcelFileStatusWorkBook());
+end
+
+
+rule "4 Slack Notification Check"
+    when
+    	// This condition must come first or the 
+    	// rule will go into an infinite loop.
+    	//***************************************
+        $hdfsDir : HDFSDirectory(numChildren == 2)               
+        $slackClient : SlackGuardianWebHook(sendMsg == false && messageSent == false)
+    then
+        System.out.println("Health check passed: Number of children is: " + 
+        	$hdfsDir.numChildren);
+        	
+        // This action changes a fact and will, therefore
+        // cause the rule to fire. To prevent this from 
+        // happening, the valid flag is set to false.
+        //***********************************************
+        modify( $slackClient ) { 
+        	setSendMsg( Boolean.TRUE )  
+        };
+        System.out.println("Health check passed. slackClient.sendMsg is: " + 
+        	$slackClient.sendMsg);
+end
+
+/* 
+ * Send a slack message
+ */
+dialect "mvel"
+
+rule "Slack Notifier"
+    when
+        $slackClient : SlackGuardianWebHook(sendMsg == true && messageSent == false)
+        $slackEvent : GuardianEvent()
+        $slackHdfsDir : HDFSDirectory(numChildren == 2) 
+    then
+      	modify ($slackClient) {
+        	setSendMsg(Boolean.FALSE),	
+        	setMessageSent(Boolean.TRUE),	
+      	}
+ 		$slackEvent.setSource(drools.getRule().getName());	
+        $slackEvent.setManagedObject($slackHdfsDir.getTargetDir()),
+        $slackEvent.setEventSeverity("INFORMATIONAL"),	
+        $slackEvent.setBody($slackHdfsDir.getRawFileStatus()),
+       	$slackEvent.setValid(Boolean.FALSE)	
+       	
+        System.out.println("Sending notifications:");
+	    $slackClient.send($slackEvent.getJsonEventMessage(), SlackGuardianWebHook.EMOJI_GHOST);
+end

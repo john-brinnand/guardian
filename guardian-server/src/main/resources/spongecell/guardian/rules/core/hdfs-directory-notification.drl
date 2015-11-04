@@ -1,0 +1,16 @@
+package spongecell.guardian.rules.core
+ 
+import spongecell.guardian.model.HDFSDirectory 
+import spongecell.guardian.notification.SimpleMailClient 
+ 
+dialect "java"
+ 
+/*
+ * This rule checks that the number of files in a directory.
+ */
+rule "4 Notification"
+    when
+        $mc : SimpleMailClient(sendMail == Boolean.TRUE)               
+    then
+        System.out.println("Sending mail.");
+end

@@ -1,0 +1,34 @@
+package spongecell.guardian.rules.core
+ 
+import spongecell.guardian.agent.yarn.model.ResourceManagerAppStatus 
+import spongecell.guardian.agent.yarn.model.ResourceManagerEvent 
+import spongecell.guardian.notification.SlackGuardianWebHook  
+
+/*
+ * This rule checks that the number of files in a directory.
+ */
+dialect "mvel"
+
+rule "Yarn.ResourceManager.Monitor.1"
+    when
+        $rmAppStatus : ResourceManagerAppStatus(active == Boolean.TRUE) 
+        $rmSlackClient : SlackGuardianWebHook(sendMsg == false && messageSent == false)
+        $rmSlackEvent : ResourceManagerEvent() 
+    then
+        System.out.println(drools.getRule().getName() + " App State is: " + 
+        	$rmAppStatus.getState() + " App Final Status is: " + 
+        	$rmAppStatus.getFinalStatus());
+      	modify ($rmSlackClient) {
+        	setSendMsg(Boolean.FALSE),	
+        	setMessageSent(Boolean.TRUE),	
+      	}
+ 		$rmSlackEvent.setSource(drools.getRule().getName());	
+        $rmSlackEvent.setManagedObject($rmAppStatus.getManagedObject()),
+        $rmSlackEvent.setEventSeverity("INFORMATIONAL"),	
+        $rmSlackEvent.setBody($rmAppStatus.getBody()),
+       	$rmSlackEvent.setValid(Boolean.FALSE)	
+       	
+        System.out.println("Sending notifications:");
+	    $rmSlackClient.send($rmSlackEvent.getJsonEventMessage(), SlackGuardianWebHook.EMOJI_GHOST);
+        $rmAppStatus.active == Boolean.FALSE;	
+end

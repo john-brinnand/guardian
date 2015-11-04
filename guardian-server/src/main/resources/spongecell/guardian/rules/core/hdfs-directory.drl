@@ -1,0 +1,60 @@
+package spongecell.guardian.rules.core
+ 
+import spongecell.guardian.model.HDFSDirectory 
+import spongecell.guardian.notification.SimpleMailClient 
+ 
+/*
+ * This rule checks that the number of files in a directory.
+ */
+dialect "mvel"
+
+rule "1 HDFSDirectory Status Check"
+    when
+        $hdfsDir1 : HDFSDirectory(statusCheck == HDFSDirectory.FILE_CHECK_UNKNOWN) 
+    then
+        System.out.println("HDFSDirectory Status Check - statusCheck: " + 
+        	$hdfsDir1.statusCheck);
+end
+
+/*
+ * This rule checks the number of children in the filesystem.
+ */ 
+dialect "java"
+
+rule "2 HDFSDirectory Children Check"
+    when
+    	// This condition must come first or the 
+    	// rule will go into an infinite loop.
+    	//***************************************
+        $mailClient : SimpleMailClient(valid == true)
+        $hdfsDir : HDFSDirectory(numChildren == 2)               
+    then
+        System.out.println("Health check passed: Number of children is: " + 
+        	$hdfsDir.numChildren);
+        	
+        // This action changes a fact and will, therefore
+        // cause the rule to fire. To prevent this from 
+        // happening, the valid flag is set to false.
+        //***********************************************
+        modify( $mailClient ) { 
+        	setSendMail( Boolean.TRUE ),  
+        	setValid( Boolean.FALSE)
+        };
+        System.out.println("Health check passed. SimpleMailClient.sendMail is: " + 
+        	$mailClient.sendMail);
+end
+
+/*
+ * This rule checks if a notification should be sent out. This
+ * decision is made depending on the sendMail flag, set by Rule 2. 
+ * If it is set to true, an email is set out to interested parties.
+ */
+dialect "mvel"
+
+rule "3 HDFSDirectory Notification Check"
+    when
+        $sendMailClient : SimpleMailClient(sendMail == Boolean.TRUE)
+    then
+        System.out.println("Yahoo: " + $sendMailClient.sendMail);
+        $sendMailClient.send();
+end
