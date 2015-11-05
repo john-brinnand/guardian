@@ -1,2 +1,2 @@
 # guardian server
-A Service that provides the resources to manage rules-libraries dynamically. 
+A Service that manages rules-libraries. 
