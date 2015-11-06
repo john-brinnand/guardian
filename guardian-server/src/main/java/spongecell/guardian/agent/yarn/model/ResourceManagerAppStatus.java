@@ -1,8 +1,7 @@
 package spongecell.guardian.agent.yarn.model;
 
-import static spongecell.guardian.agent.yarn.ResourceManagerAppMonitorConfiguration.APP;
-import static spongecell.guardian.agent.yarn.ResourceManagerAppMonitorConfiguration.STATE;
-import static spongecell.guardian.agent.yarn.ResourceManagerAppMonitorConfiguration.FINAL_STATUS;
+import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.*;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -35,24 +34,27 @@ public class ResourceManagerAppStatus {
 	} 
 	
 	public JsonNode getBody() {
+		// TODO - use a schema to generate the body.
+		//******************************************
 		ObjectNode node =  JsonNodeFactory.instance.objectNode();
-		node.set("app", JsonNodeFactory.instance.objectNode());
-		((ObjectNode)node.get("app")).put("user", appStatus.get("app").get("user").asText());
-		((ObjectNode)node.get("app")).put("name", appStatus.get("app").get("name").asText());
-		((ObjectNode)node.get("app")).put("state", appStatus.get("app").get("state").asText());
-		((ObjectNode)node.get("app")).put("queue", appStatus.get("app").get("queue").asText());
-		((ObjectNode)node.get("app")).put("finalStatus", 
-				appStatus.get("app").get("finalStatus").asText());	
-		((ObjectNode)node.get("app")).put("progress", 
-				appStatus.get("app").get("progress").asText());	
-		((ObjectNode)node.get("app")).put("applicationType", 
-				appStatus.get("app").get("applicationType").asText());	
-		((ObjectNode)node.get("app")).put("startedTime", 
-				appStatus.get("app").get("startedTime").asText());	
-		((ObjectNode)node.get("app")).put("finishedTime", 
-				appStatus.get("app").get("finishedTime").asText());	
-		((ObjectNode)node.get("app")).put("elapsedTime", 
-				appStatus.get("app").get("elapsedTime").asText());	
+		
+		node.set(APP, JsonNodeFactory.instance.objectNode());
+		((ObjectNode)node.get(APP)).put(USER, appStatus.get(APP).get(USER).asText());
+		((ObjectNode)node.get(APP)).put(NAME, appStatus.get(APP).get(NAME).asText());
+		((ObjectNode)node.get(APP)).put(STATE, appStatus.get(APP).get(STATE).asText());
+		((ObjectNode)node.get(APP)).put(QUEUE, appStatus.get(APP).get(QUEUE).asText());
+		((ObjectNode)node.get(APP)).put(FINAL_STATUS, 
+				appStatus.get(APP).get(FINAL_STATUS).asText());	
+		((ObjectNode)node.get(APP)).put(PROGRESS, 
+				appStatus.get(APP).get(PROGRESS).asText());	
+		((ObjectNode)node.get(APP)).put(APPLICATION_TYPE, 
+				appStatus.get(APP).get(APPLICATION_TYPE).asText());	
+		((ObjectNode)node.get(APP)).put(STARTED_TIME, 
+				appStatus.get(APP).get(STARTED_TIME).asText());	
+		((ObjectNode)node.get(APP)).put(FINISHED_TIME, 
+				appStatus.get(APP).get(FINISHED_TIME).asText());	
+		((ObjectNode)node.get(APP)).put(ELAPSED_TIME, 
+				appStatus.get(APP).get(ELAPSED_TIME).asText());	
 		
 		return node; 
 	}

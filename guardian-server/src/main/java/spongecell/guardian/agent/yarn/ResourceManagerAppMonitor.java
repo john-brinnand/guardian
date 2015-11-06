@@ -27,6 +27,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.*;
+
+
 /**
  * @author jbrinnand
  */
@@ -47,7 +50,8 @@ public class ResourceManagerAppMonitor {
 
 		String appId = null; 
 		CloseableHttpResponse response = null; 
-		int retryCount = 5;
+		int retryCount = config.getRetryCount();
+		int waitTime = config.getWaitTime();
 		do {
 			response = requestResourceManagerAppsStatus();
 			response.getStatusLine().getStatusCode();
@@ -56,7 +60,7 @@ public class ResourceManagerAppMonitor {
 			// **************************
 			InputStream is = response.getEntity().getContent();
 			appId = getAppId(appName, is);
-			Thread.sleep(1000);
+			Thread.sleep(waitTime);
 			log.info("AppId is: {} ", appId);
 			response.close();
 			retryCount--;
@@ -64,9 +68,9 @@ public class ResourceManagerAppMonitor {
 		
 		if (appId == null) {
 			ObjectNode node = JsonNodeFactory.instance.objectNode();
-			node.set("app", JsonNodeFactory.instance.objectNode());
-			((ObjectNode)node.get("app")).put("state", "UNKNOWN");
-			((ObjectNode)node.get("app")).put("finalStatus", "UNKNOWN");
+			node.set(APP, JsonNodeFactory.instance.objectNode());
+			((ObjectNode)node.get(APP)).put(STATE, "UNKNOWN");
+			((ObjectNode)node.get(APP)).put(FINAL_STATUS, "UNKNOWN");
 			return node;
 		}
 		
@@ -103,9 +107,9 @@ public class ResourceManagerAppMonitor {
 		
 		if (appId == null) {
 			ObjectNode node = JsonNodeFactory.instance.objectNode();
-			node.set("app", JsonNodeFactory.instance.objectNode());
-			((ObjectNode)node.get("app")).put("state", "UNKNOWN");
-			((ObjectNode)node.get("app")).put("finalStatus", "UNKNOWN");
+			node.set(APP, JsonNodeFactory.instance.objectNode());
+			((ObjectNode)node.get(APP)).put(STATE, "UNKNOWN");
+			((ObjectNode)node.get(APP)).put(FINAL_STATUS, "UNKNOWN");
 			return node;
 		}
 		
@@ -135,9 +139,8 @@ public class ResourceManagerAppMonitor {
 					.setScheme(config.getScheme())
 					.setHost(config.getHost())
 					.setPort(config.getPort())
-					.setPath(
-							"/" + config.getCluster() + "/"
-									+ config.getEndpoint())
+					.setPath( "/" + config.getCluster() + "/"
+							+ config.getEndpoint())
 					.setParameter(states, runState).build();
 		} catch (URISyntaxException e) {
 			throw new WebHdfsException(
@@ -264,8 +267,8 @@ public class ResourceManagerAppMonitor {
 				Iterator<JsonNode> properties = element.iterator();
 				while (properties.hasNext()) {
 					JsonNode property = properties.next();
-					if (property.get("name").asText().equals(appName)) {
-						String trackingUrl = property.get("trackingUrl")
+					if (property.get(NAME).asText().equals(appName)) {
+						String trackingUrl = property.get(TRACKING_URL)
 								.toString();
 						String[] urlElements = trackingUrl.split("/");
 						appId = urlElements[urlElements.length - 2];
@@ -293,8 +296,8 @@ public class ResourceManagerAppMonitor {
 				while (properties.hasNext()) {
 					JsonNode property = properties.next();
 					for (String user : users) {
-						if (property.get("user").asText().equals(user)) {
-							String trackingUrl = property.get("trackingUrl")
+						if (property.get(USER).asText().equals(user)) {
+							String trackingUrl = property.get(TRACKING_URL)
 									.toString();
 							String[] urlElements = trackingUrl.split("/");
 							appId = urlElements[urlElements.length - 2];

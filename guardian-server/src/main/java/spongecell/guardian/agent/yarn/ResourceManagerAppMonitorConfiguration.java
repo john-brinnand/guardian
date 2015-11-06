@@ -24,6 +24,7 @@ public class ResourceManagerAppMonitorConfiguration {
 	public static final String STATE = "state";
 	public static final String APP = "app";
 	public static final String FINAL_STATUS = "finalStatus";
+	public static final String USER = "user";
 	
 	public String scheme = "http";
 	public String host = "hadoop-production-resourcemanager.spongecell.net";
@@ -35,6 +36,8 @@ public class ResourceManagerAppMonitorConfiguration {
 	public String version = "0.0.1-SNAPSHOT";
 	public String sessionId = "yarn-session-v1";	
 	public String moduleId = "yarn-monitor-module-v1";
-	public String [] users = { "spongecell", "heston", "root"} ;
+	public String [] users = { "heston", "sponge", "root"} ;
+	public int retryCount = 5; 
+	public int waitTime = 1000; 
 
 }
