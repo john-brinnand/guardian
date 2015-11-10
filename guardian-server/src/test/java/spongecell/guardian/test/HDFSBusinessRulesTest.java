@@ -305,7 +305,7 @@ public class HDFSBusinessRulesTest extends AbstractTestNGSpringContextTests {
 		KieContainer kieContainer = kieServices.newKieContainer(
 			kieRepository.getDefaultReleaseId());
 
-		kieSession = kieContainer.newKieSession("hdfsDirCheckRule");
+		kieSession = kieContainer.newKieSession();
 		kieSession.addEventListener(new RuleEventListener());
 		kieSession.addEventListener(new DebugRuleRuntimeEventListener());		
 	}

@@ -96,12 +96,14 @@ public class GuardianAgentWorkFlow implements IAgentWorkFlow {
 	@Override
 	public void execute() throws URISyntaxException {
 		Set<Entry<String, Agent>>entries = workFlow.entrySet();
-		ArrayList<Object[]> findings = new ArrayList<Object[]>(); 
+		ArrayList<Object> findings = new ArrayList<Object>(); 
 		
 		for (Entry<String, Agent>entry : entries) {
 			Agent agent = entry.getValue();
 			Object[] facts = agent.getStatus();
-			findings.add(facts);
+			for (Object fact : facts) {
+				findings.add(fact);
+			}
 			
 		}
 		validateFindings(findings.toArray());
