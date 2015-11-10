@@ -11,7 +11,7 @@ public interface Agent {
 	 * Get the status of  managed object
 	 * or component in an Infrastructure.
 	 */
-	public abstract void getStatus();
+	public abstract Object[] getStatus();
 	
 	/**
 	 * This method must contain a name for the 

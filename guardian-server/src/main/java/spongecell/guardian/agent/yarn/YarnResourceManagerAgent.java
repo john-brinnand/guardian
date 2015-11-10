@@ -70,12 +70,13 @@ public class YarnResourceManagerAgent implements Agent {
 	 * Get the status of a Yarn application. 
 	 */
 	@Override
-	public void getStatus () {
+	public Object[] getStatus () {
 		JsonNode appStatus = null;
 		String runState = ""; 
 		String finalStatus = ""; 
 		int interval = 5;
 		int count = 0;
+		Object[] facts = null;
 		
 		do {
 			log.info("********** Getting the applications' status.**********");
@@ -89,7 +90,7 @@ public class YarnResourceManagerAgent implements Agent {
 				
 				if (runState.equals(RunStates.RUNNING.name()) && 
 					finalStatus.equals(RunStates.UNDEFINED.name()) && mod == 0) {
-					validateYarnMonitorRules(appStatus);
+					facts = validateYarnMonitorRules(appStatus);
 				}
 				count++;
 			} catch (IllegalStateException | IOException | InterruptedException e) {
@@ -105,10 +106,11 @@ public class YarnResourceManagerAgent implements Agent {
 				((runState.equals(RunStates.RUNNING.name()) && 
 				finalStatus.equals(RunStates.UNDEFINED.name()))));
 		try {
-			validateYarnMonitorRules(appStatus);
+			facts = validateYarnMonitorRules(appStatus);
 		} catch (JsonProcessingException e) {
 			log.info("ERROR - validation failure: {} ", e);
 		}
+		return facts;
 	}
 	
 	/**
@@ -119,7 +121,7 @@ public class YarnResourceManagerAgent implements Agent {
 	 * @param appStatus
 	 * @throws JsonProcessingException
 	 */
-	private void validateYarnMonitorRules(JsonNode appStatus)
+	private Object[] validateYarnMonitorRules(JsonNode appStatus)
 			throws JsonProcessingException {
 		log.info("appStatus is: {} ", new ObjectMapper()
 			.writerWithDefaultPrettyPrinter()
@@ -148,6 +150,7 @@ public class YarnResourceManagerAgent implements Agent {
 		}
 		kieSession.fireAllRules();
 		kieSession.dispose();
+		return facts;
 	}	
 	
 	@Bean(name="yarnResourceManagerAgent")

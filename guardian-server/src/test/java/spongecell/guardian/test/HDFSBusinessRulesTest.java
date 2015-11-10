@@ -218,7 +218,7 @@ public class HDFSBusinessRulesTest extends AbstractTestNGSpringContextTests {
 		hdfsDir.setTargetDir(path.getFile().getPath());
 		
 		GuardianEvent event = new GuardianEvent();
-		event.dateTime = LocalDateTime.now( ).toString();
+		event.dateTime = LocalDateTime.now().toString();
 		event.absolutePath = webHdfsConfig.getBaseDir();
 		event.setEventSeverity(GuardianEvent.severity.INFORMATIONAL.name());
 		

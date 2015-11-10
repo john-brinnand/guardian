@@ -38,13 +38,20 @@ public class KieMemoryFileSystemSessionHandler {
 	private KieRepository kieRepository = null;
 	private String[] rules;
 	private String basePath = "src/main/resources";
-	private String rulesPath = "myPath";
+	private String rulesPath = "spongecell/guardian/rules/core";
+	private String groupId = "spongecell";
+	private String artifactId = "heston-pipeline";
+	private String version = "0.0.1-SNAPSHOT";
+	private String moduleId = "heston-module-alpha";
+	private String sessionId = "heston-session-alpha";
+	private String rulePackage = "spongecell.guardian.rules.core";
 
-	private KieMemoryFileSystemSessionHandler() {}
+	public KieMemoryFileSystemSessionHandler() {}
 
 	public Builder newBuilder () {
 		return new Builder();
 	}
+	
 	/**
 	 * Builder which accepts the properties
 	 * provided by a user to register their
@@ -89,45 +96,56 @@ public class KieMemoryFileSystemSessionHandler {
 			return this;
 		}
 		
+		
 		public KieSession build () {
-			KieServices kieServices = KieServices.Factory.get();
-			KieResources kieResources = kieServices.getResources();
-			if (kieRepository == null) {
-				kieRepository = kieServices.getRepository();
-			}
-			// Create a release identifier, based on maven's 
-			// artifact identification: group, artifactId, version.
-			//*****************************************************
-			ReleaseId releaseId = kieServices.newReleaseId(
-					groupId, artifactId, version);
-
-			// Build the module which contains the knowledge-base 
-			// and the session.
-			//****************************************************
-			KieModuleModel kieModuleModel = buildKieModule(
-					kieServices, modelId, sessionId);
-
-			// Store the kieModule and the rules in the memory files system.
-			//**************************************************************
-			KieFileSystem kieFileSystem = buildKieFileSystem(kieServices,
-					kieResources, kieModuleModel, releaseId);
-
-			// Build the container with the compiled knowledge-base
-			// and the releaseId.
-			//*****************************************************
-			KieContainer kieContainer = buildKieContainer(kieServices,
-					kieFileSystem, releaseId);
-			
-			// Start polling the Maven repository. 
-//			if (kieScanner == null) {
-//				kieScanner = kieServices.newKieScanner( kieContainer );
-//				kieScanner.start( 10000L );
-//			}
-			KieSession kieSession = kieContainer.newKieSession(sessionId);
-
-			return kieSession;
+			return buildSession(this);
 		}	
 	}
+
+	private KieSession buildSession (Builder builder) {
+		groupId = builder.groupId;
+		artifactId = builder.artifactId;
+		version = builder.version;
+		sessionId = builder.sessionId;
+		moduleId = builder.modelId;
+		
+		KieServices kieServices = KieServices.Factory.get();
+		KieResources kieResources = kieServices.getResources();
+		if (kieRepository == null) {
+			kieRepository = kieServices.getRepository();
+		}
+		// Create a release identifier, based on maven's 
+		// artifact identification: group, artifactId, version.
+		//*****************************************************
+		ReleaseId releaseId = kieServices.newReleaseId(
+				groupId, artifactId, version);
+
+		// Build the module which contains the knowledge-base 
+		// and the session.
+		//****************************************************
+		KieModuleModel kieModuleModel = buildKieModule(
+				kieServices, moduleId, sessionId);
+
+		// Store the kieModule and the rules in the memory files system.
+		//**************************************************************
+		KieFileSystem kieFileSystem = buildKieFileSystem(kieServices,
+				kieResources, kieModuleModel, releaseId);
+
+		// Build the container with the compiled knowledge-base
+		// and the releaseId.
+		//*****************************************************
+		KieContainer kieContainer = buildKieContainer(kieServices,
+				kieFileSystem, releaseId);
+
+		// Start polling the Maven repository. 
+		//			if (kieScanner == null) {
+		//				kieScanner = kieServices.newKieScanner( kieContainer );
+		//				kieScanner.start( 10000L );
+		//			}
+		KieSession kieSession = kieContainer.newKieSession(sessionId);
+
+		return kieSession;	
+	}	
 	
 	/**
 	 * Build the KieModule.
