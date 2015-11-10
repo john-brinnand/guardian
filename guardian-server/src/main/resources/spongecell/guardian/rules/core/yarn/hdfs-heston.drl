@@ -1,0 +1,18 @@
+package spongecell.guardian.rules.core
+ 
+import spongecell.guardian.model.HDFSDirectory 
+import spongecell.guardian.notification.GuardianEvent 
+import spongecell.guardian.notification.SlackGuardianWebHook  
+
+/*
+ * This rule checks that the number of files in a directory.
+ */
+dialect "mvel"
+
+rule "1 HDFS Heston Status Check"
+    when
+        $hdfsDir : HDFSDirectory(statusCheck == HDFSDirectory.FILE_CHECK_UNKNOWN) 
+    then
+        System.out.println("HDFSDirectory Status Check - statusCheck: " + 
+        	$hdfsDir.statusCheck);
+end
