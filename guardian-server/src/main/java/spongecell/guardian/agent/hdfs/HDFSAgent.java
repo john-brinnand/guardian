@@ -1,10 +1,8 @@
 package spongecell.guardian.agent.hdfs;
 
-import static spongecell.webhdfs.WebHdfsParams.DEFAULT_PERMISSIONS;
 import static spongecell.webhdfs.WebHdfsParams.FILE;
 import static spongecell.webhdfs.WebHdfsParams.FILE_STATUS;
 import static spongecell.webhdfs.WebHdfsParams.FILE_STATUSES;
-import static spongecell.webhdfs.WebHdfsParams.PERMISSION;
 import static spongecell.webhdfs.WebHdfsParams.TYPE;
 
 import java.io.IOException;
@@ -26,14 +24,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import spongecell.guardian.agent.exception.GuardianWorkFlowException;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.model.HDFSDirectory;
@@ -42,6 +32,14 @@ import spongecell.guardian.notification.SlackGuardianWebHook;
 import spongecell.webhdfs.WebHdfsConfiguration;
 import spongecell.webhdfs.WebHdfsOps;
 import spongecell.webhdfs.WebHdfsWorkFlow;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * @author jbrinnand

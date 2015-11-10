@@ -97,7 +97,6 @@ public class GuardianAgentWorkFlowTest extends AbstractTestNGSpringContextTests{
 		final String stepOne = "MonitorYarnApp";
 		Agent agent = (Agent) ctx.getBean(agentId);
 		workFlow.addEntry(stepOne, agent);
-		workFlow.execute();
 		try {
 			scheduler.run(workFlow);
 		} catch (TimeoutException | InterruptedException | ExecutionException e) {
@@ -109,18 +108,20 @@ public class GuardianAgentWorkFlowTest extends AbstractTestNGSpringContextTests{
 	@Test
 	public void validateGuardianAgentWorkFlowSchedulerMultiAgent()
 			throws URISyntaxException, InterruptedException {
-		final String stepOne = "MonitorYarnApp";
-		final String hdfsAgentId = "hdfsAgent";
-//		Agent agent = (Agent) ctx.getBean(agentId);
-		Agent hdfsAgent = (Agent) ctx.getBean(hdfsAgentId);
-		workFlow.addEntry(stepOne, hdfsAgent);
-		workFlow.execute();
+		final String[] agentIds = { "yarnResourceManagerAgent", "hdfsAgent" };
+		int count = 1;
+		String step = "step";
+		for (String agentId : agentIds) {
+			Agent agent = (Agent) ctx.getBean(agentId);
+			step = step + count;
+			workFlow.addEntry(step, agent);
+			count++;
+		}
 		try {
 			scheduler.run(workFlow);
 		} catch (TimeoutException | InterruptedException | ExecutionException e) {
 			throw new GuardianWorkFlowException("Agent WorkFlow failure", e);
 		}
 		Thread.sleep(90000);
-		
 	}
 }	
