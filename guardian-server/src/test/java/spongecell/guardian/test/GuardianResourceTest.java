@@ -1,8 +1,12 @@
 package spongecell.guardian.test;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+
+import java.util.Arrays;
+
 import lombok.extern.slf4j.Slf4j;
 
+import org.codehaus.jackson.node.JsonNodeFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.MediaType;
@@ -19,6 +23,11 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import spongecell.guardian.application.GuardianResourceConfiguration;
 
@@ -73,14 +82,23 @@ public class GuardianResourceTest extends AbstractTestNGSpringContextTests {
 	@Test(priority = 1, groups = "integration")
 	public void validatePostRequestParams() throws Exception {
 		MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
-		data = "Greetings!";
+		final StringBuffer agentIds =  new StringBuffer();
+		agentIds.append("yarnResourceManagerAgent").append(",").append("hdfsListDirectoryAgent");
+		final String agentIdKey = "agentIds";
+		final String workFlowIdKey = "workFlowId";
+		
+		ObjectNode dataNode =  new ObjectMapper().createObjectNode();
+		dataNode.with("workFlow").put(workFlowIdKey, "guardianAgentWorkFlow"); 
+		dataNode.with("workFlow").put(agentIdKey, agentIds.toString()); 
+		log.info(dataNode.toString());
+		
 		final String agentId = "yarnResourceManagerAgent";
 		final String AGENT_ID = "agentId";
 
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders
 				.post(BASE_URI);
 		request.contentType(MediaType.ALL_VALUE);
-		request.content(data);
+		request.content(dataNode.toString());
 		request.param(AGENT_ID, agentId);
 
 		ResultActions actions = mockMvc.perform(request);
@@ -95,7 +113,7 @@ public class GuardianResourceTest extends AbstractTestNGSpringContextTests {
 				.getContentAsString());
 		
 		Assert.assertEquals(mvcResult.getResponse().getContentAsString(),
-				"Agent " + agentId + " has been scheduled to run.");
+				"WorkFlow guardianAgentWorkFlow has been scheduled to run.");
 		
 		Thread.sleep(90000);
 	}	

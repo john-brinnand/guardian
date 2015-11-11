@@ -1,6 +1,7 @@
 package spongecell.guardian.agent.workflow;
 
 import java.net.URISyntaxException;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,6 +35,7 @@ import spongecell.guardian.handler.KieMemoryFileSystemSessionHandler;
 public class GuardianAgentWorkFlow implements IAgentWorkFlow {
 	private Map<String, Agent> workFlow;
 	private @Autowired KieMemoryFileSystemSessionHandler kieMFSessionHandler;	
+	private String id;
 	
 	@Bean(name="guardianAgentWorkFlow")
 	public IAgentWorkFlow guardianAgentWorkFlow() {
@@ -132,5 +134,14 @@ public class GuardianAgentWorkFlow implements IAgentWorkFlow {
 		}
 		kieSession.fireAllRules();
 		kieSession.dispose();
+	}
+
+	public String getId() {
+		return this.id;
+	}
+
+	@Override
+	public void setId(String id) {
+		this.id = id;
 	}
 }

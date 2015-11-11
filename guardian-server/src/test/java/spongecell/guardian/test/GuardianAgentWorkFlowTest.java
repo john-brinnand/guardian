@@ -20,7 +20,6 @@ import spongecell.guardian.agent.scheduler.GuardianWorkFlowScheduler;
 import spongecell.guardian.agent.workflow.GuardianAgentWorkFlow;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.agent.yarn.YarnResourceManagerAgent;
-import spongecell.webhdfs.WebHdfsWorkFlow;
 
 /**
  * @author jbrinnand
@@ -31,8 +30,7 @@ import spongecell.webhdfs.WebHdfsWorkFlow;
 	GuardianAgentWorkFlow.class,
 	YarnResourceManagerAgent.class,
 	GuardianWorkFlowScheduler.class,
-	HDFSFileListAgent.class,
-	WebHdfsWorkFlow.Builder.class
+	HDFSFileListAgent.class
 })
 public class GuardianAgentWorkFlowTest extends AbstractTestNGSpringContextTests{
 	private @Autowired GuardianAgentWorkFlow workFlow;

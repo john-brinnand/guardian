@@ -6,6 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
+import spongecell.guardian.agent.hdfs.HDFSFileListAgent;
+import spongecell.guardian.agent.workflow.GuardianAgentWorkFlow;
 import spongecell.guardian.agent.yarn.ResourceManagerAppMonitor;
 import spongecell.guardian.agent.yarn.ResourceManagerAppMonitorScheduler;
 import spongecell.guardian.agent.yarn.YarnResourceManagerAgent;
@@ -19,7 +21,9 @@ import spongecell.guardian.handler.KieMemoryFileSystemSessionHandler;
 	ResourceManagerAppMonitorScheduler.class,
 	YarnResourceManagerAgent.class,
 	ResourceManagerAppMonitor.class, 
-	KieMemoryFileSystemSessionHandler.class
+	KieMemoryFileSystemSessionHandler.class,
+	GuardianAgentWorkFlow.class,
+	HDFSFileListAgent.class
 })
 @EnableWebMvc
 public class GuardianApplication {

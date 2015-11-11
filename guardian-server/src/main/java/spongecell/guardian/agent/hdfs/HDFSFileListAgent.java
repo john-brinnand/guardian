@@ -46,7 +46,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 @Slf4j
 @Getter @Setter
-@EnableConfigurationProperties({ WebHdfsConfiguration.class   })
+@EnableConfigurationProperties({ WebHdfsConfiguration.class,  WebHdfsWorkFlow.Builder.class  })
 public class HDFSFileListAgent implements Agent {
 	private @Autowired WebHdfsConfiguration webHdfsConfig;	
 	private @Autowired WebHdfsWorkFlow.Builder webHdfsWorkFlowBuilder;
@@ -70,7 +70,6 @@ public class HDFSFileListAgent implements Agent {
 		String path = webHdfsConfig.getBaseDir() + "/" + webHdfsConfig.getFileName();
 		log.info(path);
 		
-		// TODO the output path must be configurable.
 		WebHdfsWorkFlow workFlow = webHdfsWorkFlowBuilder
 			.path(path)
 			.addEntry("ListDirectoryStatus", 

@@ -2,6 +2,7 @@ package spongecell.guardian.application;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Scanner;
 
 import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServletRequest;
@@ -9,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,16 +19,21 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import spongecell.guardian.agent.exception.GuardianWorkFlowException;
+import spongecell.guardian.agent.scheduler.GuardianWorkFlowScheduler;
+import spongecell.guardian.agent.workflow.IAgentWorkFlow;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.agent.yarn.ResourceManagerAppMonitorScheduler;
 
-import com.fasterxml.jackson.core.util.ByteArrayBuilder;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j
 @RestController
 @RequestMapping("/v1/guardian")
+@EnableConfigurationProperties({GuardianWorkFlowScheduler.class})
 public class GuardianResource {
-	private @Autowired ResourceManagerAppMonitorScheduler scheduler;
+	@Autowired private GuardianWorkFlowScheduler scheduler;
 	@Autowired private ApplicationContext appContext;
 	
 	@PreDestroy 
@@ -44,17 +51,19 @@ public class GuardianResource {
 	}
 	
 	@RequestMapping(method = RequestMethod.POST)
-	public ResponseEntity<?> agentScheduler(HttpServletRequest request,
-			@RequestParam(value="agentId") String agentId) throws Exception {
+	public ResponseEntity<?> agentSchedulerBuilder(
+		HttpServletRequest request,
+		@RequestParam(value="agentId") String agentId) throws Exception {
 		
 		// TODO What about the fluent API.
 		// agent.addGroupId().addArtifactId()
 		//      .addVersion().addOther().build();
-		//***************************************************
-		Agent agent = (Agent)appContext.getBean(agentId);
-		scheduler.setAgent(agent);
-		scheduler.run();	
-		String content = "Agent " + agentId  + " has been scheduled to run."; 
+		//****************************************
+		String body = getContent(request.getInputStream());
+		IAgentWorkFlow workFlow = buildWorkFlow(body);
+		scheduler.run(workFlow);
+		
+		String content = "WorkFlow " + workFlow.getId()  + " has been scheduled to run."; 
 		log.info("Returning : {} ", content);
 		ResponseEntity<String> response = new ResponseEntity<String>(content, HttpStatus.OK);
 		return response; 
@@ -101,13 +110,37 @@ public class GuardianResource {
 	}	
 	
 	private String getContent (InputStream is) throws IOException {
-		ByteArrayBuilder bab = new ByteArrayBuilder();
-		int value;
-		while ((value = is.read()) != -1) {
-			bab.append(value);
+		Scanner s = new Scanner(is);
+		StringBuffer buf = new StringBuffer();
+		while (s.hasNext()) {
+			buf.append(s.next());
 		}
-		String content = new String(bab.toByteArray());
-		bab.close();
-		return content; 
+		s.close();
+		log.info(buf.toString());
+		return buf.toString(); 
+	}
+	
+	private IAgentWorkFlow buildWorkFlow(String body) {
+		ObjectMapper om = new ObjectMapper();
+		IAgentWorkFlow workFlow = null; 
+		try {
+			JsonNode node = om.readTree(body);
+			String workFlowId = node.get("workFlow").get("workFlowId").asText(); 
+			workFlow = (IAgentWorkFlow) appContext.getBean(workFlowId);
+			workFlow.setId(workFlowId);
+			
+			String[] agentIds = node.get("workFlow").get("agentIds").asText().split(","); 
+			int count = 0;
+			String step = "step";
+			for (String agentId : agentIds) {
+				Agent agent = (Agent) appContext.getBean(agentId);
+				step = step + count;
+				workFlow.addEntry(step, agent);
+				count++;
+			}	
+		} catch (IOException e) {
+			throw new GuardianWorkFlowException("ERROR building workflow: ", e);
+		} 
+		return workFlow;
 	}
 }
