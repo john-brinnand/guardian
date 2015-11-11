@@ -15,7 +15,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import spongecell.guardian.agent.exception.GuardianWorkFlowException;
-import spongecell.guardian.agent.hdfs.HDFSAgent;
+import spongecell.guardian.agent.hdfs.HDFSFileListAgent;
 import spongecell.guardian.agent.scheduler.GuardianWorkFlowScheduler;
 import spongecell.guardian.agent.workflow.GuardianAgentWorkFlow;
 import spongecell.guardian.agent.yarn.Agent;
@@ -31,7 +31,7 @@ import spongecell.webhdfs.WebHdfsWorkFlow;
 	GuardianAgentWorkFlow.class,
 	YarnResourceManagerAgent.class,
 	GuardianWorkFlowScheduler.class,
-	HDFSAgent.class,
+	HDFSFileListAgent.class,
 	WebHdfsWorkFlow.Builder.class
 })
 public class GuardianAgentWorkFlowTest extends AbstractTestNGSpringContextTests{
@@ -108,7 +108,8 @@ public class GuardianAgentWorkFlowTest extends AbstractTestNGSpringContextTests{
 	@Test
 	public void validateGuardianAgentWorkFlowSchedulerMultiAgent()
 			throws URISyntaxException, InterruptedException {
-		final String[] agentIds = { "yarnResourceManagerAgent", "hdfsAgent" };
+		final String[] agentIds = { "yarnResourceManagerAgent",
+				"hdfsListDirectoryAgent" };
 		int count = 1;
 		String step = "step";
 		for (String agentId : agentIds) {

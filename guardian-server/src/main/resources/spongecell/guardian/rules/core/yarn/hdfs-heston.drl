@@ -16,3 +16,24 @@ rule "1 HDFS Heston Status Check"
         System.out.println("HDFSDirectory Status Check - statusCheck: " + 
         	$hdfsDir.statusCheck);
 end
+
+dialect "mvel"
+rule "Slack Notifier"
+    when
+        $slackClient : SlackGuardianWebHook(sendMsg == false && messageSent == false)
+        $slackEvent : GuardianEvent()
+        $slackHdfsDir : HDFSDirectory() 
+    then
+      	modify ($slackClient) {
+        	setSendMsg(Boolean.FALSE),	
+        	setMessageSent(Boolean.TRUE),	
+      	}
+ 		$slackEvent.setSource(drools.getRule().getName());	
+        $slackEvent.setManagedObject($slackHdfsDir.getTargetDir()),
+        $slackEvent.setEventSeverity("INFORMATIONAL"),	
+        $slackEvent.setBody($slackHdfsDir.getRawFileStatus()),
+       	$slackEvent.setValid(Boolean.FALSE)	
+       	
+        System.out.println("Sending notifications:");
+	    $slackClient.send($slackEvent.getJsonEventMessage(), SlackGuardianWebHook.EMOJI_GHOST);
+end
