@@ -106,7 +106,6 @@ public class GuardianAgentWorkFlow implements IAgentWorkFlow {
 			for (Object fact : facts) {
 				findings.add(fact);
 			}
-			
 		}
 		validateFindings(findings.toArray());
 	}	

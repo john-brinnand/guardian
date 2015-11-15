@@ -23,10 +23,11 @@ import spongecell.guardian.agent.exception.GuardianWorkFlowException;
 import spongecell.guardian.agent.scheduler.GuardianWorkFlowScheduler;
 import spongecell.guardian.agent.workflow.IAgentWorkFlow;
 import spongecell.guardian.agent.yarn.Agent;
-import spongecell.guardian.agent.yarn.ResourceManagerAppMonitorScheduler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.*;
 
 @Slf4j
 @RestController
@@ -53,19 +54,22 @@ public class GuardianResource {
 	@RequestMapping(method = RequestMethod.POST)
 	public ResponseEntity<?> agentSchedulerBuilder(
 		HttpServletRequest request,
-		@RequestParam(value="agentId") String agentId) throws Exception {
+		@RequestParam(value=OP) String op) throws Exception {
 		
 		// TODO What about the fluent API.
 		// agent.addGroupId().addArtifactId()
 		//      .addVersion().addOther().build();
-		//****************************************
-		String body = getContent(request.getInputStream());
-		IAgentWorkFlow workFlow = buildWorkFlow(body);
-		scheduler.run(workFlow);
-		
-		String content = "WorkFlow " + workFlow.getId()  + " has been scheduled to run."; 
-		log.info("Returning : {} ", content);
-		ResponseEntity<String> response = new ResponseEntity<String>(content, HttpStatus.OK);
+		//****************************************	
+		String content = ""; 
+		if (op.equals(CREATE)) {
+			String body = getContent(request.getInputStream());
+			IAgentWorkFlow workFlow = buildWorkFlow(body);
+			scheduler.run(workFlow);
+			content = "WorkFlow " + workFlow.getId()  + " " + STATUS.STARTED.name(); 
+			log.info("Returning : {} ", content);
+		}
+		ResponseEntity<String> response = new ResponseEntity<String>(
+			content, HttpStatus.OK);
 		return response; 
 	}	
 	
@@ -98,7 +102,7 @@ public class GuardianResource {
 	
 	@RequestMapping("/monitor")
 	public ResponseEntity<?> monitor(HttpServletRequest request,
-			@RequestParam(value = "op") String op, 
+			@RequestParam(value = OP) String op, 
 			@RequestParam (value="duration") String duration) throws Exception {
 		String content = "";
 		if (op.equals("start")) {
@@ -125,13 +129,13 @@ public class GuardianResource {
 		IAgentWorkFlow workFlow = null; 
 		try {
 			JsonNode node = om.readTree(body);
-			String workFlowId = node.get("workFlow").get("workFlowId").asText(); 
+			String workFlowId = node.get(WORKFLOW).get(WORKFLOW_ID).asText(); 
 			workFlow = (IAgentWorkFlow) appContext.getBean(workFlowId);
 			workFlow.setId(workFlowId);
 			
-			String[] agentIds = node.get("workFlow").get("agentIds").asText().split(","); 
+			String[] agentIds = node.get(WORKFLOW).get(AGENT_IDS).asText().split(COMMA); 
 			int count = 0;
-			String step = "step";
+			String step = STEP;
 			for (String agentId : agentIds) {
 				Agent agent = (Agent) appContext.getBean(agentId);
 				step = step + count;

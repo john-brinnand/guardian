@@ -1,5 +1,12 @@
 package spongecell.guardian.agent.yarn;
 
+import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.APP;
+import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.FINAL_STATUS;
+import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.NAME;
+import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.STATE;
+import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.TRACKING_URL;
+import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.USER;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -9,9 +16,11 @@ import java.util.Iterator;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +36,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.*;
-
 
 /**
  * @author jbrinnand
@@ -39,55 +46,18 @@ import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.*;
 public class ResourceManagerAppMonitor {
 	@Autowired
 	private ResourceManagerAppMonitorConfiguration config;
-	private CloseableHttpClient httpClient;
+	private RequestConfig requestConfig;
 
 	public ResourceManagerAppMonitor() {
-		httpClient = HttpClients.createDefault();
+		requestConfig = RequestConfig.custom()
+				  .setConnectTimeout(3 * 1000)
+				  .setConnectionRequestTimeout(1 * 1000)
+				  .setSocketTimeout(3 * 1000)
+				  .build();
 	}
 
-	public JsonNode getResourceManagerAppStatus(String appName)
-			throws IllegalStateException, IOException, InterruptedException {
-
-		String appId = null; 
-		CloseableHttpResponse response = null; 
-		int retryCount = config.getRetryCount();
-		int waitTime = config.getWaitTime();
-		do {
-			response = requestResourceManagerAppsStatus();
-			response.getStatusLine().getStatusCode();
-
-			// Get the application's id.
-			// **************************
-			InputStream is = response.getEntity().getContent();
-			appId = getAppId(appName, is);
-			Thread.sleep(waitTime);
-			log.info("AppId is: {} ", appId);
-			response.close();
-			retryCount--;
-		} while (appId == null && retryCount > 0);
-		
-		if (appId == null) {
-			ObjectNode node = JsonNodeFactory.instance.objectNode();
-			node.set(APP, JsonNodeFactory.instance.objectNode());
-			((ObjectNode)node.get(APP)).put(STATE, "UNKNOWN");
-			((ObjectNode)node.get(APP)).put(FINAL_STATUS, "UNKNOWN");
-			return node;
-		}
-		
-		// Extract the appId, return it as a fact.
-		//*****************************************
-		response = requestAppStatus(appId);
-		String appStatus = getContent(response.getEntity().getContent());
-		JsonNode jsonAppStatus = new ObjectMapper().readTree(appStatus);
-		log.debug(new ObjectMapper().writerWithDefaultPrettyPrinter()
-			.writeValueAsString(jsonAppStatus));
-		response.close();
-		return jsonAppStatus;
-	}
-	
 	public JsonNode getResourceManagerAppStatusUser(String[] users)
 			throws IllegalStateException, IOException, InterruptedException {
-
 		String appId = null; 
 		CloseableHttpResponse response = null; 
 		int retryCount = 5;
@@ -121,6 +91,8 @@ public class ResourceManagerAppMonitor {
 		log.debug(new ObjectMapper().writerWithDefaultPrettyPrinter()
 			.writeValueAsString(jsonAppStatus));
 		response.close();
+		requestAppMapReduceJobs(appId);
+		
 		return jsonAppStatus;
 	}
 	
@@ -129,7 +101,9 @@ public class ResourceManagerAppMonitor {
 	 * http://hadoop-production-resourcemanager.spongecell.net:8088/
 	 * ws/v1/cluster/apps?states=running"
 	 */
-	public CloseableHttpResponse requestResourceManagerAppsStatus() {
+	public CloseableHttpResponse requestResourceManagerAppsStatus() 
+		throws WebHdfsException{
+		CloseableHttpClient httpClient = HttpClients.createDefault();
 		URI uri = null;
 		String states = ResourceManagerAppMonitorConfiguration.STATES;
 		String runState = ResourceManagerAppMonitorConfiguration.RunStates.RUNNING
@@ -147,6 +121,7 @@ public class ResourceManagerAppMonitor {
 					"ERROR - failure to create URI. Cause is:  ", e);
 		}
 		HttpGet get = new HttpGet(uri);
+		get.setConfig(requestConfig);
 		log.debug("URI is : {} ", get.getURI().toString());
 
 		CloseableHttpResponse response = null;
@@ -157,10 +132,13 @@ public class ResourceManagerAppMonitor {
 					.getStatusCode());
 			Assert.isTrue(response.getStatusLine().getStatusCode() == 200,
 					"Response code indicates a failed request.");
-
 		} catch (IOException e) {
-			throw new WebHdfsException("ERROR - failure to create file: "
-					+ uri.toString(), e);
+			if (e instanceof ConnectionPoolTimeoutException) {
+				log.info("Connection timed out {} ", e.getMessage());
+			}
+			else {
+				log.info("ERROR {} ", e.getMessage());
+			}
 		} finally {
 			 get.completed();
 		}
@@ -174,9 +152,10 @@ public class ResourceManagerAppMonitor {
 	 * @param appId
 	 * @return
 	 */
-	public CloseableHttpResponse requestAppStatus(String appId) {
+	public CloseableHttpResponse requestAppStatus(String appId) 
+		throws WebHdfsException {
+		CloseableHttpClient httpClient = HttpClients.createDefault();
 		URI uri = null;
-
 		try {
 			uri = new URIBuilder()
 					.setScheme(config.getScheme())
@@ -191,6 +170,7 @@ public class ResourceManagerAppMonitor {
 					"ERROR - failure to create URI. Cause is:  ", e);
 		}
 		HttpGet get = new HttpGet(uri);
+		get.setConfig(requestConfig);
 		log.info("URI is : {} ", get.getURI().toString());
 
 		CloseableHttpResponse response = null;
@@ -201,16 +181,76 @@ public class ResourceManagerAppMonitor {
 					.getStatusCode());
 			Assert.isTrue(response.getStatusLine().getStatusCode() == 200,
 					"Response code indicates a failed write");
-			// response.close();
-
 		} catch (IOException e) {
-			throw new WebHdfsException("ERROR - failure to create file: "
-					+ uri.toString(), e);
+			if (e instanceof ConnectionPoolTimeoutException) {
+				log.info("Connection timed out {} ", e.getMessage());
+			}
+			else {
+				log.info("ERROR {} ", e.getMessage());
+			}	
 		} finally {
 			get.completed();
 		}
 		return response;
 	}
+	
+	/**
+	 * Source: https://hadoop.apache.org/docs/r2.7.1/hadoop-mapreduce-client/
+	 * hadoop-mapreduce-client-core/MapredAppMasterRest.html
+	 * 
+	 * GET http://<proxy http address:port>/proxy/
+	 * application_1326232085508_0004/ws/v1/mapreduce/jobs
+	 * 
+	 * GET http://<proxy http address:port>/proxy/
+	 * application_1326232085508_0004/ws/v1/mapreduce/jobs/job_1326232085508_4_4/conf
+	 * @param appId
+	 * @return
+	 */
+	public CloseableHttpResponse requestAppMapReduceJobs(String appId) 
+		throws WebHdfsException{
+		CloseableHttpClient httpClient = HttpClients.createDefault();
+		URI uri = null;
+		try {
+			uri = new URIBuilder()
+					.setScheme(config.getScheme())
+					.setHost(config.getHost())
+					.setPort(config.getPort())
+					.setPath( "/" + "proxy" 
+						+ "/" + appId + 
+						"/" + "ws/v1/mapreduce/jobs")
+					.build();
+		} catch (URISyntaxException e) {
+			throw new WebHdfsException(
+					"ERROR - failure to create URI. Cause is:  ", e);
+		}
+		HttpGet get = new HttpGet(uri);
+		get.setConfig(requestConfig);
+		log.info("URI is : {} ", get.getURI().toString());
+
+		CloseableHttpResponse response = null;
+		try {
+			response = httpClient.execute(get);
+			Assert.notNull(response);
+			log.info("Response status code {} ", response.getStatusLine()
+					.getStatusCode());
+			Assert.isTrue(response.getStatusLine().getStatusCode() == 200,
+					"Response code indicates a failed GET operation");
+			String content = getContent(response.getEntity().getContent());
+			log.info("******** MapReduce Jobs: {} ", content); 					
+		} catch (IOException e) {
+			log.error("IOException timed out {} ", e);
+			if (e instanceof ConnectionPoolTimeoutException) {
+				log.info("Connection timed out {} ", e.getCause());
+			}
+			else {
+				log.info("ERROR {} ", e.getCause());
+			}			
+		} finally {
+			get.completed();
+		}
+		return response;
+	}	
+	
 
 	/**
 	 * Utility: getContent from a stream.

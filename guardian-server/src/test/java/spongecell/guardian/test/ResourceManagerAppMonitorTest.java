@@ -97,51 +97,6 @@ public class ResourceManagerAppMonitorTest extends AbstractTestNGSpringContextTe
 	 * @throws InterruptedException
 	 */
 	@Test
-	public void validateResourceManagerApps() throws IllegalStateException,
-			IOException, InterruptedException {
-		JsonNode appStatus = null;
-		String runState = ""; 
-		String finalStatus = ""; 
-		boolean validation = false; 
-		do {
-			log.info("*************** Getting the applications' status.***************");
-			
-			appStatus = resourceManagerAppMonitor
-					.getResourceManagerAppStatus(WORDCOUNT);
-			Assert.assertNotNull(appStatus);
-			
-			runState = appStatus.get(APP).get(STATE).asText();
-			finalStatus = appStatus.get(APP).get(FINAL_STATUS).asText();
-			
-			if (runState.equals(RunStates.RUNNING.name()) && 
-				finalStatus.equals(RunStates.UNDEFINED.name()) && 
-				validation == false) {
-				validateYarnMonitorRules(appStatus);
-				validation = true;
-			}
-		} while (runState.equals(RunStates.UNKNOWN.name()) && 
-				finalStatus.equals(RunStates.UNKNOWN.name()) || 
-				((runState.equals(RunStates.RUNNING.name()) && 
-				finalStatus.equals(RunStates.UNDEFINED.name()))));
-
-		Assert.assertEquals(appStatus.get(APP).get(STATE).asText(),
-				RunStates.FINISHED.name());
-		Assert.assertEquals(appStatus.get(APP).get(FINAL_STATUS).asText(),
-				RunStates.SUCCEEDED.name());
-		
-		validateYarnMonitorRules(appStatus);
-	}
-	
-	
-	/**
-	 * Note: this test requires the wordcount test to be runnning in the local
-	 * hadoop cluster within the docker container.
-	 * 
-	 * @throws IllegalStateException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	@Test
 	public void validateResourceManagerAppMonitorUsers() throws IllegalStateException,
 			IOException, InterruptedException {
 		JsonNode appStatus = null;
