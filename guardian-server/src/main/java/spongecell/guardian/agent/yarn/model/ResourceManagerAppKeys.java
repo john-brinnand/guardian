@@ -15,4 +15,5 @@ public class ResourceManagerAppKeys {
 	public static final String FINISHED_TIME = "finishedTime"; 
 	public static final String ELAPSED_TIME = "elapsedTime"; 
 	public static final String TRACKING_URL = "trackingUrl"; 
+	public static final String SUCCEEDED = "SUCCEEDED";
 }

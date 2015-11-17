@@ -6,6 +6,7 @@ import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.NAME;
 import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.STATE;
 import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.TRACKING_URL;
 import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.USER;
+import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.SUCCEEDED;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.util.Assert;
 
+import spongecell.guardian.agent.exception.GuardianWorkFlowException;
 import spongecell.webhdfs.exception.WebHdfsException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -42,11 +44,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 @Slf4j
 @Getter
-@EnableConfigurationProperties({ ResourceManagerAppMonitorConfiguration.class })
+@EnableConfigurationProperties({ 
+	ResourceManagerAppMonitorConfiguration.class ,
+	ResourceManagerMapReduceJobInfo.class
+})
 public class ResourceManagerAppMonitor {
 	@Autowired
 	private ResourceManagerAppMonitorConfiguration config;
+	@Autowired
+	private ResourceManagerMapReduceJobInfo mapReduceJobInfo;
 	private RequestConfig requestConfig;
+	private boolean jobInfoStatus;
 
 	public ResourceManagerAppMonitor() {
 		requestConfig = RequestConfig.custom()
@@ -54,6 +62,7 @@ public class ResourceManagerAppMonitor {
 				  .setConnectionRequestTimeout(1 * 1000)
 				  .setSocketTimeout(3 * 1000)
 				  .build();
+		jobInfoStatus = false;
 	}
 
 	public JsonNode getResourceManagerAppStatusUser(String[] users)
@@ -91,8 +100,19 @@ public class ResourceManagerAppMonitor {
 		log.debug(new ObjectMapper().writerWithDefaultPrettyPrinter()
 			.writeValueAsString(jsonAppStatus));
 		response.close();
-		requestAppMapReduceJobs(appId);
-		
+	
+		//*******************************************
+		// This should be done once only, for every 
+		// new job. TODO put this is a separate 
+		// class.
+		//*******************************************
+		if (jobInfoStatus == false) {
+			mapReduceJobInfo.getMapReduceJobInfo(appId, appStatus);
+			jobInfoStatus = true;
+		}
+		if (jsonAppStatus.get(APP).get(FINAL_STATUS).equals(SUCCEEDED)) {
+			jobInfoStatus = false;
+		}
 		return jsonAppStatus;
 	}
 	
@@ -235,8 +255,8 @@ public class ResourceManagerAppMonitor {
 					.getStatusCode());
 			Assert.isTrue(response.getStatusLine().getStatusCode() == 200,
 					"Response code indicates a failed GET operation");
-			String content = getContent(response.getEntity().getContent());
-			log.info("******** MapReduce Jobs: {} ", content); 					
+//			String content = getContent(response.getEntity().getContent());
+//			log.info("******** MapReduce Jobs: {} ", content); 					
 		} catch (IOException e) {
 			log.error("IOException timed out {} ", e);
 			if (e instanceof ConnectionPoolTimeoutException) {
@@ -250,6 +270,53 @@ public class ResourceManagerAppMonitor {
 		}
 		return response;
 	}	
+	
+	/**
+	 * Source: https://hadoop.apache.org/docs/r2.7.1/hadoop-mapreduce-client/
+	 * hadoop-mapreduce-client-core/MapredAppMasterRest.html
+	 * 
+	 * GET http://<proxy http address:port>/proxy/
+	 * application_1326232085508_0004/ws/v1/mapreduce/jobs/job_1326232085508_4_4/conf
+	  
+	 * @param appId
+	 * @param jobId
+	 * @return
+	 */
+	public CloseableHttpResponse requestAppMapReduceJobInfo(String appId, String jobId) {
+		CloseableHttpClient httpClient = HttpClients.createDefault();
+		URI uri = null;
+		try {
+			uri = new URIBuilder()
+					.setScheme(config.getScheme())
+					.setHost(config.getHost())
+					.setPort(config.getPort())
+					.setPath( "/" 
+						+ "proxy" + "/" + appId 
+						+ "/" + "ws/v1/mapreduce/jobs" 
+						+ "/" + jobId + "/" + "conf")
+					.build();
+		} catch (URISyntaxException e) {
+			throw new WebHdfsException(
+					"ERROR - failure to create URI. Cause is:  ", e);
+		}
+		HttpGet get = new HttpGet(uri);
+		log.info("URI is : {} ", get.getURI().toString());
+
+		CloseableHttpResponse response = null;
+		try {
+			response = httpClient.execute(get);
+			Assert.notNull(response);
+			log.info("Response status code {} ", response.getStatusLine()
+					.getStatusCode());
+			Assert.isTrue(response.getStatusLine().getStatusCode() == 200,
+					"Response code indicates a failed GET operation");
+		} catch (IOException e) {
+			log.info("ERROR {}", e);
+		} finally {
+			get.completed();
+		}
+		return response;
+	}		
 	
 
 	/**
@@ -349,4 +416,78 @@ public class ResourceManagerAppMonitor {
 		}
 		return appId;
 	}
+
+	/**
+	 * {
+	 *   "jobs": {
+	 *       "job": [
+	 *           {
+	 *               "startTime": 1447449404328,
+	 *               "finishTime": 0,
+	 *               "elapsedTime": 7434,
+	 *               "id": "job_1447351326751_0045",
+	 *               "name": "word count",
+	 *               "user": "root",
+	 *               "state": "RUNNING",
+	 *               "mapsTotal": 1,
+	 *               "mapsCompleted": 1,
+	 *               "reducesTotal": 1,
+	 *               "reducesCompleted": 0,
+	 *               "mapProgress": 100,
+	 *               "reduceProgress": 0,
+	 *               "mapsPending": 0,
+	 *               "mapsRunning": 0,
+	 *               "reducesPending": 1,
+	 *               "reducesRunning": 0,
+	 *               "uberized": false,
+	 *               "diagnostics": "",
+	 *               "newReduceAttempts": 1,
+	 *               "runningReduceAttempts": 0,
+	 *               "failedReduceAttempts": 0,
+	 *               "killedReduceAttempts": 0,
+	 *               "successfulReduceAttempts": 0,
+	 *               "newMapAttempts": 0,
+	 *               "runningMapAttempts": 0,
+	 *               "failedMapAttempts": 0,
+	 *               "killedMapAttempts": 0,
+	 *               "successfulMapAttempts": 1
+	 *           }
+	 *       ]
+	 *    }
+	 * }
+	 * @param content
+	 * @param name
+	 * @return
+	 */
+	public String getJobId(String content, String appStatus) {
+		String id = null;
+		try {
+			String name = new ObjectMapper().readTree(appStatus)
+				.get("app")
+				.get("name")
+				.asText();	
+			
+			Iterator<JsonNode> appsIter = new ObjectMapper().readTree(content)
+					.elements();
+			while (appsIter.hasNext()) {
+				JsonNode app = appsIter.next();
+				Iterator<JsonNode> elements = app.elements();
+				while (elements.hasNext()) {
+					JsonNode element = elements.next();
+					Iterator<JsonNode> properties = element.iterator();
+					while (properties.hasNext()) {
+						JsonNode property = properties.next();
+						if (property.get("name").asText().equals(name)) {
+							id = property.get("id").asText();
+							break;
+						}
+					}
+				}
+			}
+		} catch (IOException e) {
+			log.info("ERROR - failed to read the jobStatus: {} ", e);
+//			throw new GuardianWorkFlowException("ERROR - failed to read the jobStatus", e);
+		}
+		return id;
+	}	
 }

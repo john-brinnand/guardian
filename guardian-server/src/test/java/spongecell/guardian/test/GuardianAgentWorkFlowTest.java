@@ -1,11 +1,13 @@
 package spongecell.guardian.test;
 
 import java.net.URISyntaxException;
+import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.codehaus.jackson.node.JsonNodeFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -13,6 +15,11 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import spongecell.guardian.agent.exception.GuardianWorkFlowException;
 import spongecell.guardian.agent.hdfs.HDFSFileListAgent;
@@ -122,5 +129,38 @@ public class GuardianAgentWorkFlowTest extends AbstractTestNGSpringContextTests{
 			throw new GuardianWorkFlowException("Agent WorkFlow failure", e);
 		}
 		Thread.sleep(90000);
+	}
+
+	@Test
+	public void validateGuardianAgentWorkFlowSchedulerMultiAgentProperties()
+			throws URISyntaxException, InterruptedException, JsonProcessingException {
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode node = mapper.createObjectNode();
+		node.with("workFlow").put("name", "heston-workflow");
+		node.with("workFlow").with("Step-1").with("yarnResourceManagerAgent");
+		node.with("workFlow").with("Step-2").with("hdfsListDirectoryAgent")
+			.put("outputPath", "/data/raw/analytics");
+		node.with("workFlow").with("Step-3").with("hdfsListDirectoryAgent")
+			.put("inputPath", "/data/extract")
+			.put("outputPath", "/data/extract");
+		log.info("WorkFlow config is: {} ", mapper
+			.writerWithDefaultPrettyPrinter()
+			.writeValueAsString(node)); 
+		
+		printNodes(node, mapper);
+	}
+	
+	private void printNodes(JsonNode node, ObjectMapper mapper) throws JsonProcessingException {
+		Iterator<JsonNode> iter = node.iterator();
+		while (iter.hasNext()) {
+			JsonNode next = iter.next();
+			log.info(" ------------------------------------- ");
+			log.info("Configuration node is: {} ", 
+				mapper.writerWithDefaultPrettyPrinter()
+				.writeValueAsString(next));
+			if (!next.isNull()) {
+				printNodes(next, mapper);
+			}
+		}
 	}
 }	
