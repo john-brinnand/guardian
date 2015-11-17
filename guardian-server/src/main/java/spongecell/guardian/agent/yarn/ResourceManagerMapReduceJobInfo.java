@@ -77,7 +77,7 @@ public class ResourceManagerMapReduceJobInfo {
 				.writeValueAsString(jsonJobInfoStatus));	
 			
 			StringEntity entity = new StringEntity(jobInfoContent);
-			WebHdfsWorkFlow workFlow = buildWorkFlow(entity);
+			WebHdfsWorkFlow workFlow = buildWorkFlow(entity, appId, jobId);
 			workFlow.execute();
 		} catch (WebHdfsException | URISyntaxException | 
 				IllegalStateException | IOException e) {
@@ -282,7 +282,7 @@ public class ResourceManagerMapReduceJobInfo {
 		return id;
 	}		
 	
-	private WebHdfsWorkFlow buildWorkFlow(StringEntity entity) {
+	private WebHdfsWorkFlow buildWorkFlow(StringEntity entity, String appId, String jobId) {
 		DateTimeFormatter customDTF = new DateTimeFormatterBuilder()
 	        .appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
 	        .appendValue(MONTH_OF_YEAR, 2)
@@ -295,13 +295,15 @@ public class ResourceManagerMapReduceJobInfo {
 			.addPathSegment(jobInfoConfig.getBaseDir())
 			.addPathSegment(customDTF.format(LocalDate.now()))
 			.build();
-			
+		
+		String filePrefix = appId + "_" + jobId + "_"; 
+		String relativePathFileName = filePrefix + jobInfoConfig.getFileName();		
 		String fileName = path.getFile().getPath() + File.separator + 
-				jobInfoConfig.getFileName();		
+			relativePathFileName;	
 		
 		WebHdfsWorkFlow workFlow = webHdfsWorkFlowBuilder
 			.path(path.getFile().getPath())
-			.fileName(jobInfoConfig.getFileName())
+			.fileName(relativePathFileName)
 			.addEntry("CreateBaseDir", 
 				WebHdfsOps.MKDIRS, 
 				HttpStatus.OK, 
