@@ -5,6 +5,7 @@ import static spongecell.guardian.agent.yarn.ResourceManagerAppMonitorConfigurat
 import static spongecell.guardian.agent.yarn.ResourceManagerAppMonitorConfiguration.STATE;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 
 import lombok.extern.slf4j.Slf4j;
@@ -95,10 +96,11 @@ public class ResourceManagerAppMonitorTest extends AbstractTestNGSpringContextTe
 	 * @throws IllegalStateException
 	 * @throws IOException
 	 * @throws InterruptedException
+	 * @throws URISyntaxException 
 	 */
 	@Test
 	public void validateResourceManagerAppMonitorUsers() throws IllegalStateException,
-			IOException, InterruptedException {
+			IOException, InterruptedException, URISyntaxException {
 		JsonNode appStatus = null;
 		String runState = ""; 
 		String finalStatus = ""; 

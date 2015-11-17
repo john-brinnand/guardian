@@ -1,9 +1,14 @@
 package spongecell.guardian.agent.yarn;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.SignStyle;
 import java.util.Iterator;
 
 import org.apache.http.client.config.RequestConfig;
@@ -11,27 +16,38 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import spongecell.webhdfs.FilePath;
+import spongecell.webhdfs.WebHdfsOps;
+import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.webhdfs.exception.WebHdfsException;
 import lombok.extern.slf4j.Slf4j;
+import static java.time.temporal.ChronoField.DAY_OF_MONTH;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+import static java.time.temporal.ChronoField.YEAR;
 
 @Slf4j
 @EnableConfigurationProperties({ 
-	ResourceManagerAppMonitorConfiguration.class 
+	ResourceManagerAppMonitorConfiguration.class,
+	WebHdfsWorkFlow.Builder.class,	
+	ResourceManagerMapReduceJobInfoConfiguration.class,
 })
 public class ResourceManagerMapReduceJobInfo {
-	@Autowired
-	private ResourceManagerAppMonitorConfiguration config;	
+	@Autowired private ResourceManagerAppMonitorConfiguration config;	
 	private RequestConfig requestConfig;
+	private @Autowired WebHdfsWorkFlow.Builder webHdfsWorkFlowBuilder;
+	private @Autowired ResourceManagerMapReduceJobInfoConfiguration jobInfoConfig;
 	
 	public ResourceManagerMapReduceJobInfo () {
 		requestConfig = RequestConfig.custom()
@@ -41,21 +57,31 @@ public class ResourceManagerMapReduceJobInfo {
 			  .build();
 	}
 	
-	public void getMapReduceJobInfo(String appId, String appStatus)
-			throws IllegalStateException, IOException {
-		CloseableHttpResponse response = requestAppMapReduceJobs(appId);
-		
-		String jobContent = getContent(response.getEntity().getContent());
-		
-		String jobId = getJobId(jobContent, appStatus);
-		if (jobId != null) {
+	public void getMapReduceJobInfo(String appId, String appStatus) {
+		try {
+			CloseableHttpResponse response = requestAppMapReduceJobs(appId);
+			String jobContent = getContent(response.getEntity().getContent());
+			String jobId = getJobId(jobContent, appStatus);
+			if (jobId == null) {
+				return;
+			}
 			response = requestAppMapReduceJobInfo(appId, jobId);
+			if (response == null) {
+				return;
+			}
 			String jobInfoContent = getContent(response.getEntity().getContent());
 			JsonNode jsonJobInfoStatus = new ObjectMapper()
 				.readTree(jobInfoContent);
 			log.info(new ObjectMapper()
 				.writerWithDefaultPrettyPrinter()
 				.writeValueAsString(jsonJobInfoStatus));	
+			
+			StringEntity entity = new StringEntity(jobInfoContent);
+			WebHdfsWorkFlow workFlow = buildWorkFlow(entity);
+			workFlow.execute();
+		} catch (WebHdfsException | URISyntaxException | 
+				IllegalStateException | IOException e) {
+			log.info("ERROR getting MapReduce Job Info: {} ", e);
 		}
 	}
 	
@@ -252,8 +278,50 @@ public class ResourceManagerMapReduceJobInfo {
 			}
 		} catch (IOException e) {
 			log.info("ERROR - failed to read the jobStatus: {} ", e);
-//			throw new GuardianWorkFlowException("ERROR - failed to read the jobStatus", e);
 		}
 		return id;
 	}		
+	
+	private WebHdfsWorkFlow buildWorkFlow(StringEntity entity) {
+		DateTimeFormatter customDTF = new DateTimeFormatterBuilder()
+	        .appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
+	        .appendValue(MONTH_OF_YEAR, 2)
+	        .appendValue(DAY_OF_MONTH, 2)
+	        .toFormatter();	
+
+		// Basedir: /data/guardian/<dateTimeFormat>
+		//*******************************************
+		FilePath path = new FilePath.Builder()
+			.addPathSegment(jobInfoConfig.getBaseDir())
+			.addPathSegment(customDTF.format(LocalDate.now()))
+			.build();
+			
+		String fileName = path.getFile().getPath() + File.separator + 
+				jobInfoConfig.getFileName();		
+		
+		WebHdfsWorkFlow workFlow = webHdfsWorkFlowBuilder
+			.path(path.getFile().getPath())
+			.fileName(jobInfoConfig.getFileName())
+			.addEntry("CreateBaseDir", 
+				WebHdfsOps.MKDIRS, 
+				HttpStatus.OK, 
+				path.getFile().getPath())
+			.addEntry("SetBaseDirOwner", 
+				WebHdfsOps.SETOWNER, 
+				HttpStatus.OK, 
+				jobInfoConfig.getBaseDir(), 
+				jobInfoConfig.getOwner(), 
+				jobInfoConfig.getGroup())
+			.addEntry("CreateAndWriteToFile", 
+				WebHdfsOps.CREATE, 
+				HttpStatus.CREATED, 
+				entity)
+			.addEntry("SetFileOwner", WebHdfsOps.SETOWNER, 
+				HttpStatus.OK, 
+				fileName,
+				jobInfoConfig.getOwner(), 
+				jobInfoConfig.getGroup())
+			.build();		
+		return workFlow;
+	}
 }
