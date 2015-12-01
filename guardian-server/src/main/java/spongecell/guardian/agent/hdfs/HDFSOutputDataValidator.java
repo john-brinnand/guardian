@@ -12,6 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
+import org.codehaus.plexus.component.annotations.Configuration;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
@@ -35,7 +38,6 @@ import spongecell.webhdfs.WebHdfsOps;
 import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.webhdfs.WebHdfsWorkFlow.Builder;
 import spongecell.workflow.config.repository.IGenericConfigurationRepository;
-
 import static spongecell.webhdfs.WebHdfsParams.FILE;
 import static spongecell.webhdfs.WebHdfsParams.FILE_STATUS;
 import static spongecell.webhdfs.WebHdfsParams.FILE_STATUSES;
@@ -75,9 +77,10 @@ public class HDFSOutputDataValidator implements Agent {
 		for (String configId : configIds) {
 			if (configId.equals(WEBHDFS_BEAN_CONFIG_PROPS_PREFIX)) {
 				builder = (Builder) ctx.getBean(WEBHDFS_WORKFLOW_BEAN_NAME);
-				workFlow = builder.context(ctx)
-					   .repoId(WEBHDFS_BEAN_NAME)
-					   .build();
+				workFlow = builder
+					.context(ctx)
+					.repoId(WEBHDFS_BEAN_NAME)
+					.build();
 			}
 		} 
 	} 

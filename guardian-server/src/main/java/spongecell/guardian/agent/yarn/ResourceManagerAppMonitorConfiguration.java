@@ -2,12 +2,14 @@ package spongecell.guardian.agent.yarn;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * @author jbrinnand
  */
+@ToString
 @Getter @Setter
 @ConfigurationProperties(prefix ="app.monitor")
 public class ResourceManagerAppMonitorConfiguration {

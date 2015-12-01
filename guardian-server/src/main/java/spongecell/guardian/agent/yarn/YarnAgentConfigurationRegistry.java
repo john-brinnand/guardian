@@ -53,6 +53,9 @@ public class YarnAgentConfigurationRegistry implements IGenericConfigurationRepo
 		return configRepo.agentIterator();
 	}	
 	
+	//*************************************************************
+	// HDFS Data Validator Agent.
+	//*************************************************************
 	@Bean(name=HDFSOutputDataValidator.BEAN_NAME)
 	@DependsOn(value={ 
 		HDFSOutputDataValidator.WEBHDFS_BEAN_NAME, 
@@ -78,7 +81,41 @@ public class YarnAgentConfigurationRegistry implements IGenericConfigurationRepo
 	public WebHdfsConfiguration buildWebHdfsConfig() {
 		return new WebHdfsConfiguration();
 	}
-
+	
+	//*************************************************************
+	// Resource Manager Application Monitor Agent.
+	//*************************************************************
+	@Bean(name=ResourceManagerAppMonitorAgent.BEAN_NAME)
+	@DependsOn(value={ ResourceManagerAppMonitorAgent.BEAN_CONFIG_NAME })
+	public ResourceManagerAppMonitorAgent buildResourceManagerAppAgent () {
+		return new ResourceManagerAppMonitorAgent(configRepo);
+	}	
+	
+	@Bean(name=ResourceManagerAppMonitorAgent.BEAN_CONFIG_NAME)
+	@ConfigurationProperties(prefix=
+		ResourceManagerAppMonitorAgent.BEAN_CONFIG_PREFIX)
+	@BeanConfigurations(parent=ResourceManagerAppMonitorAgent.BEAN_NAME)
+	public ResourceManagerAppMonitorConfiguration buildResourceManagerAppAgentConfiguration() {
+		return new ResourceManagerAppMonitorConfiguration();
+	}		
+	
+	//*************************************************************
+	// ResourceManager Job Info Agent 
+	//*************************************************************
+	@Bean(name=ResourceManagerMapReduceJobInfoAgent.BEAN_NAME)
+	@DependsOn(value={ ResourceManagerMapReduceJobInfoAgent.BEAN_CONFIG_NAME })
+	public ResourceManagerMapReduceJobInfoAgent buildResourceManagerJobInfoAgent () {
+		return new ResourceManagerMapReduceJobInfoAgent(configRepo);
+	}	
+	
+	@Bean(name=ResourceManagerMapReduceJobInfoAgent.BEAN_CONFIG_NAME)
+	@ConfigurationProperties(prefix=
+		ResourceManagerMapReduceJobInfoAgent.BEAN_CONFIG_PREFIX)
+	@BeanConfigurations(parent=ResourceManagerMapReduceJobInfoAgent.BEAN_NAME)
+	public ResourceManagerAppMonitorConfiguration buildResourceManagerJobInfoConfig() {
+		return new ResourceManagerAppMonitorConfiguration();
+	}	
+	
 	@Override
 	public <T> T getAgent(String agentId) {
 		return configRepo.getAgent(agentId);
