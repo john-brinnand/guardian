@@ -1,7 +1,6 @@
 package spongecell.guardian.agent.workflow;
 
 import java.net.URISyntaxException;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -99,13 +98,14 @@ public class GuardianAgentWorkFlow implements IAgentWorkFlow {
 	public void execute() throws URISyntaxException {
 		Set<Entry<String, Agent>>entries = workFlow.entrySet();
 		ArrayList<Object> findings = new ArrayList<Object>(); 
-		
+		Object[] args = new Object[1];
 		for (Entry<String, Agent>entry : entries) {
 			Agent agent = entry.getValue();
-			Object[] facts = agent.getStatus();
+			Object[] facts = agent.getStatus(args);
 			for (Object fact : facts) {
 				findings.add(fact);
 			}
+			args = facts;
 		}
 		validateFindings(findings.toArray());
 	}	

@@ -7,7 +7,6 @@ import java.util.concurrent.TimeoutException;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.codehaus.jackson.node.JsonNodeFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -16,17 +15,17 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import spongecell.guardian.agent.exception.GuardianWorkFlowException;
 import spongecell.guardian.agent.hdfs.HDFSFileListAgent;
 import spongecell.guardian.agent.scheduler.GuardianWorkFlowScheduler;
 import spongecell.guardian.agent.workflow.GuardianAgentWorkFlow;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.agent.yarn.YarnResourceManagerAgent;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * @author jbrinnand

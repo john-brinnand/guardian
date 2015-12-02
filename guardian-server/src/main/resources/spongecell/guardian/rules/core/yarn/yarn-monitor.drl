@@ -29,6 +29,6 @@ rule "Yarn.ResourceManager.Monitor.1"
        	$rmSlackEvent.setValid(Boolean.FALSE)	
        	
         System.out.println("Sending notifications:");
-	    $rmSlackClient.send($rmSlackEvent.getJsonEventMessage(), SlackGuardianWebHook.EMOJI_GHOST);
+//	    $rmSlackClient.send($rmSlackEvent.getJsonEventMessage(), SlackGuardianWebHook.EMOJI_GHOST);
         $rmAppStatus.active == Boolean.FALSE;	
 end

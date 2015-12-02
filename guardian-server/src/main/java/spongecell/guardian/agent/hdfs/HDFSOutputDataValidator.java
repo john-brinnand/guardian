@@ -1,5 +1,10 @@
 package spongecell.guardian.agent.hdfs;
 
+import static spongecell.webhdfs.WebHdfsParams.FILE;
+import static spongecell.webhdfs.WebHdfsParams.FILE_STATUS;
+import static spongecell.webhdfs.WebHdfsParams.FILE_STATUSES;
+import static spongecell.webhdfs.WebHdfsParams.TYPE;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.text.ParseException;
@@ -12,21 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.codehaus.plexus.component.annotations.Configuration;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import spongecell.guardian.agent.exception.GuardianWorkFlowException;
 import spongecell.guardian.agent.yarn.Agent;
@@ -38,10 +32,14 @@ import spongecell.webhdfs.WebHdfsOps;
 import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.webhdfs.WebHdfsWorkFlow.Builder;
 import spongecell.workflow.config.repository.IGenericConfigurationRepository;
-import static spongecell.webhdfs.WebHdfsParams.FILE;
-import static spongecell.webhdfs.WebHdfsParams.FILE_STATUS;
-import static spongecell.webhdfs.WebHdfsParams.FILE_STATUSES;
-import static spongecell.webhdfs.WebHdfsParams.TYPE;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Slf4j
 @EnableConfigurationProperties({ 
