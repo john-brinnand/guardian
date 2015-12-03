@@ -45,32 +45,6 @@ public class HDFSOutputDataValidatorRegistry {
 		log.info("foo");
 	}
 	
-	//*************************************************************
-	// HDFS Data Validator Agent.
-	//*************************************************************
-//	@Bean(name=HDFSOutputDataValidator.WEBHDFS_BEAN_NAME)
-//	@ConfigurationProperties(prefix=
-//	HDFSOutputDataValidator.WEBHDFS_BEAN_CONFIG_PROPS_PREFIX)
-//	@BeanConfigurations(parent=HDFSOutputDataValidator.BEAN_NAME)
-//	public WebHdfsConfiguration buildWebHdfsConfig() {
-//		log.info("1 WebHdfsConfiguration");
-//		return new WebHdfsConfiguration();
-//	}	
-//
-//	@Bean(name=HDFSOutputDataValidator.WEBHDFS_WORKFLOW_BEAN_NAME)
-//	@ConfigurationProperties(prefix=HDFSOutputDataValidator.WEBHDFS_WORKFLOW_CONFIG_PREFIX)
-//	@BeanConfigurations(parent=HDFSOutputDataValidator.BEAN_NAME)
-//	public WebHdfsWorkFlow.Builder buildWebHdfsWorkFlow() {
-//		log.info("2 WebHdfsWorkFlow.Builder");
-//		return new WebHdfsWorkFlow.Builder();
-//	}	
-//	@Bean(name=HDFSOutputDataValidator.BEAN_NAME)
-//	@ConfigurationProperties(prefix=HDFSOutputDataValidator.BEAN_CONFIG_PROPS_PREFIX)
-//	public HDFSOutputDataValidator buildHdfsOutputDataValidator () {
-//		log.info("3 HDFSOutputDataValidator");
-//		return new HDFSOutputDataValidator(configRepo);
-//	}	
-//***************************
 	@Bean(name=HDFSOutputDataValidator.BEAN_NAME)
 	@DependsOn(value={ 
 		HDFSOutputDataValidator.WEBHDFS_BEAN_NAME, 

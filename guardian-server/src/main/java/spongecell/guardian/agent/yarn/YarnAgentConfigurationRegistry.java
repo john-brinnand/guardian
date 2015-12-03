@@ -119,38 +119,6 @@ public class YarnAgentConfigurationRegistry implements IGenericConfigurationRepo
 	//*************************************************************
 	// HDFS Data Validator Agent.
 	//*************************************************************
-//	@Bean(name=HDFSOutputDataValidator.BEAN_NAME)
-//	@DependsOn(value={ 
-//		HDFSOutputDataValidator.WEBHDFS_BEAN_NAME, 
-//		HDFSOutputDataValidator.WEBHDFS_WORKFLOW_BEAN_NAME
-//	})
-//	@ConfigurationProperties(prefix=HDFSOutputDataValidator.BEAN_CONFIG_PROPS_PREFIX)
-//	public HDFSOutputDataValidator buildHdfsOutputDataValidator () {
-//		return new HDFSOutputDataValidator(configRepo);
-//	}	
-//	
-//	@Bean(name=HDFSOutputDataValidator.WEBHDFS_WORKFLOW_BEAN_NAME)
-//	@ConfigurationProperties(prefix=
-//		HDFSOutputDataValidator.WEBHDFS_WORKFLOW_CONFIG_PREFIX)
-//	@BeanConfigurations(include=false)
-//	public WebHdfsWorkFlow.Builder buildWebHdfsWorkFlow() {
-//		return new WebHdfsWorkFlow.Builder();
-//	}
-//	
-//	@Bean(name=HDFSOutputDataValidator.WEBHDFS_BEAN_NAME)
-//	@ConfigurationProperties(prefix=
-//		HDFSOutputDataValidator.WEBHDFS_BEAN_CONFIG_PROPS_PREFIX)
-//	@BeanConfigurations(parent=HDFSOutputDataValidator.BEAN_NAME)
-//	public WebHdfsConfiguration buildWebHdfsConfig() {
-//		return new WebHdfsConfiguration();
-//	}
-//	
-//	@Bean(name="hdfsOutputDataValidatorRegistry")
-//	@BeanConfigurations(include=true)
-//	public HDFSOutputDataValidatorRegistry buildHdfsOutputDataValidatorRegistry () {
-//		return new HDFSOutputDataValidatorRegistry();
-//	}	
-	
 	@Bean(name=HDFSOutputDataValidator.BEAN_NAME)
 	@BeanConfigurations(include=true)
 	public HDFSOutputDataValidator buildHdfsOutputDataValidator () {

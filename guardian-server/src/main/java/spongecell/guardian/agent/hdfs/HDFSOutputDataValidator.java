@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
@@ -36,7 +35,6 @@ import spongecell.webhdfs.WebHdfsOps;
 import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.webhdfs.WebHdfsWorkFlow.Builder;
 import spongecell.workflow.config.repository.IBetaGenericConfigurationRepository;
-import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -51,9 +49,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 	WebHdfsConfiguration.class, 
 	WebHdfsWorkFlow.Builder.class,
 })
-@ComponentScan(HDFSOutputDataValidator.BEAN_NAME)
 public class HDFSOutputDataValidator implements Agent {
-//	@Autowired private HDFSOutputDataValidatorRegistry registry;
 	private WebHdfsWorkFlow.Builder builder;
 	private WebHdfsWorkFlow workFlow;
 	public static final String BEAN_NAME = "hdfsOutputDataValidator";
@@ -63,10 +59,6 @@ public class HDFSOutputDataValidator implements Agent {
 	public static final String WEBHDFS_WORKFLOW_BEAN_NAME = "hdfsWorkFlowBeanName";
 	public static final String WEBHDFS_WORKFLOW_CONFIG_PREFIX = "hdfs.output.workflow.webhdfs";
 	
-	@PostConstruct
-	public void init() {
-		log.info("pause");
-	}
 	public HDFSOutputDataValidator () { } 
 		
 	public HDFSOutputDataValidator (IBetaGenericConfigurationRepository repo) { 
