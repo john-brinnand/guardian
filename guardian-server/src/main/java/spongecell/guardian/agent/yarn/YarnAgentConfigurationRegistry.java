@@ -10,17 +10,14 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.DependsOn;
 
 import spongecell.guardian.agent.hdfs.HDFSOutputDataValidator;
 import spongecell.guardian.agent.hdfs.HDFSOutputDataValidatorRegistry;
-import spongecell.webhdfs.WebHdfsConfiguration;
-import spongecell.webhdfs.WebHdfsWorkFlow;
-import spongecell.webhdfs.WebHdfsWorkFlow.Builder;
+import spongecell.guardian.agent.yarn.jobinfo.ResourceManagerMapReduceJobInfoRegistry;
+import spongecell.guardian.agent.yarn.resourcemonitor.ResourceMonitorAppAgentRegistry;
 import spongecell.workflow.config.framework.BeanConfigurations;
 import spongecell.workflow.config.repository.BetaGenericConfigurationRepository;
 import spongecell.workflow.config.repository.GenericConfigurationRepository;
@@ -32,10 +29,15 @@ import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 @EnableConfigurationProperties({ 
 	GenericConfigurationRepository.class,
 	BetaGenericConfigurationRepository.class,
-	HDFSOutputDataValidatorRegistry.class
+	HDFSOutputDataValidatorRegistry.class,
+	ResourceMonitorAppAgentRegistry.class,
+	ResourceManagerMapReduceJobInfoRegistry.class
 })
 public class YarnAgentConfigurationRegistry implements IGenericConfigurationRepository {
 	@Autowired private GenericConfigurationRepository configRepo;
+	private static final String RESOURCE_MANAGER_APP_AGENT_BUILDER = "A:resourceManagerAppAgentBuilder";
+	private static final String RESOURCE_MANAGER_JOBINFO_AGENT_BUILDER = "B:resourceManagerJobInfoAgentBuilder";
+	private static final String HDFS_OUTPUT_VALIDATOR_BUILDER = "C:hdfsOutputDataValidatorBuilder";
 
 	public YarnAgentConfigurationRegistry() { }
 	
@@ -65,63 +67,33 @@ public class YarnAgentConfigurationRegistry implements IGenericConfigurationRepo
 	//*************************************************************
 	// Resource Manager Application Monitor Agent.
 	//*************************************************************
-	@Bean(name=ResourceManagerAppMonitorAgent.BEAN_NAME)
-	@DependsOn(value={ ResourceManagerAppMonitorAgent.BEAN_CONFIG_NAME })
+	@Bean(name=RESOURCE_MANAGER_APP_AGENT_BUILDER)
+	@BeanConfigurations(include=false)
 	public ResourceManagerAppMonitorAgent buildResourceManagerAppAgent () {
-		return new ResourceManagerAppMonitorAgent(configRepo);
-	}	
-	
-	@Bean(name=ResourceManagerAppMonitorAgent.BEAN_CONFIG_NAME)
-	@ConfigurationProperties(prefix=
-		ResourceManagerAppMonitorAgent.BEAN_CONFIG_PREFIX)
-	@BeanConfigurations(parent=ResourceManagerAppMonitorAgent.BEAN_NAME)
-	public ResourceManagerAppMonitorConfiguration buildResourceManagerAppAgentConfiguration() {
-		return new ResourceManagerAppMonitorConfiguration();
-	}			
+		configRepo.getApplicationContext()
+			.getBean(ResourceMonitorAppAgentRegistry.class);
+		return new ResourceManagerAppMonitorAgent();
+	}
 	
 	//*************************************************************
 	// ResourceManager Job Info Agent 
 	//*************************************************************
-	@Bean(name=ResourceManagerMapReduceJobInfoAgent.BEAN_NAME)
-	@DependsOn(value={ 
-		ResourceManagerMapReduceJobInfoAgent.BEAN_CONFIG_NAME,
-		ResourceManagerMapReduceJobInfoAgent.BEAN_WORKFLOW_BUILDER_NAME,
-		ResourceManagerMapReduceJobInfoAgent.BEAN_WEBHDFS_CONFIG_NAME,
-	})
+	@Bean(name=RESOURCE_MANAGER_JOBINFO_AGENT_BUILDER)
+	@BeanConfigurations(include=false)
 	public ResourceManagerMapReduceJobInfoAgent buildResourceManagerJobInfoAgent () {
-		return new ResourceManagerMapReduceJobInfoAgent(configRepo);
-	}	
-	
-	@Bean(name=ResourceManagerMapReduceJobInfoAgent.BEAN_CONFIG_NAME)
-	@ConfigurationProperties(prefix=
-		ResourceManagerMapReduceJobInfoAgent.BEAN_CONFIG_PREFIX)
-	@BeanConfigurations(parent=ResourceManagerMapReduceJobInfoAgent.BEAN_NAME)
-	public ResourceManagerAppMonitorConfiguration buildResourceManagerJobInfoAppConfig() {
-		return new ResourceManagerAppMonitorConfiguration();
-	}		
-	
-	@Bean(name=ResourceManagerMapReduceJobInfoAgent.BEAN_WORKFLOW_BUILDER_NAME)
-	@ConfigurationProperties(prefix=
-		ResourceManagerMapReduceJobInfoAgent.BEAN_WORKFLOW_BUILDER_CONFIG_PREFIX)
-	@BeanConfigurations(parent=ResourceManagerMapReduceJobInfoAgent.BEAN_NAME)
-	public Builder buildResourceManagerWorkFlowBuilder() {
-		return new WebHdfsWorkFlow.Builder();
-	}	
-	
-	@Bean(name=ResourceManagerMapReduceJobInfoAgent.BEAN_WEBHDFS_CONFIG_NAME)
-	@ConfigurationProperties(prefix=
-		ResourceManagerMapReduceJobInfoAgent.BEAN_WEBHDFS_CONFIG_PREFIX)
-	@BeanConfigurations(parent=ResourceManagerMapReduceJobInfoAgent.BEAN_NAME)
-	public WebHdfsConfiguration buildResourceManagerJobInfoConfig() {
-		return new WebHdfsConfiguration();
+		configRepo.getApplicationContext()
+			.getBean(ResourceManagerMapReduceJobInfoRegistry.class);	
+		return new ResourceManagerMapReduceJobInfoAgent();
 	}	
 		
 	//*************************************************************
 	// HDFS Data Validator Agent.
 	//*************************************************************
-	@Bean(name=HDFSOutputDataValidator.BEAN_NAME)
-	@BeanConfigurations(include=true)
+	@Bean(name=HDFS_OUTPUT_VALIDATOR_BUILDER)
+	@BeanConfigurations(include=false)
 	public HDFSOutputDataValidator buildHdfsOutputDataValidator () {
+		configRepo.getApplicationContext()
+			.getBean(HDFSOutputDataValidatorRegistry.class);
 		return new HDFSOutputDataValidator();
 	}	
 		

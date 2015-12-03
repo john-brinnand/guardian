@@ -32,6 +32,8 @@ import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import spongecell.guardian.agent.hdfs.HDFSOutputDataValidatorRegistry;
+import spongecell.guardian.agent.yarn.resourcemonitor.ResourceMonitorAppAgentRegistry;
 import spongecell.webhdfs.FilePath;
 import spongecell.webhdfs.WebHdfsConfiguration;
 import spongecell.webhdfs.WebHdfsOps;

@@ -83,7 +83,7 @@ public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSprin
 	}
 	
 	@Test
-	public void validateYarnAgentWorkFlow() throws URISyntaxException {
+	public void validateYarnAgentWorkFlow() throws URISyntaxException, InterruptedException {
 		log.info("Validating.");
 		IGenericConfigurationRepository repo = ctx.getBean(
 				YarnAgentConfigurationRegistry.class);
@@ -99,6 +99,13 @@ public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSprin
 			workFlow.addEntry("step" + stepCount, agent);
 			stepCount++;
 		}
-		workFlow.execute();
+		int count = 0;
+		int maxCount = 4;
+		do  {
+			workFlow.execute();
+			Thread.sleep(2000);
+			count++;
+		} while (count < maxCount);
+
 	}	
 }

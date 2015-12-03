@@ -49,6 +49,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @EnableConfigurationProperties({ 
 	WebHdfsConfiguration.class, 
 	WebHdfsWorkFlow.Builder.class,
+	HDFSOutputDataValidatorRegistry.class
 })
 public class HDFSOutputDataValidator implements Agent {
 	private WebHdfsWorkFlow.Builder builder;
