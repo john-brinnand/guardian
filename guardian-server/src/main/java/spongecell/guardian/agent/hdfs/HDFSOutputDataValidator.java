@@ -35,6 +35,7 @@ import spongecell.webhdfs.WebHdfsOps;
 import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.webhdfs.WebHdfsWorkFlow.Builder;
 import spongecell.workflow.config.repository.IBetaGenericConfigurationRepository;
+import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -61,8 +62,14 @@ public class HDFSOutputDataValidator implements Agent {
 	
 	public HDFSOutputDataValidator () { } 
 		
-	public HDFSOutputDataValidator (IBetaGenericConfigurationRepository repo) { 
+	public HDFSOutputDataValidator (IGenericConfigurationRepository repo) { 
 		Iterator<Entry<String, ArrayList<String>>> entries = repo.agentIterator();
+		if (log.isDebugEnabled()) {
+			String[] beanNames = repo.getApplicationContext().getBeanDefinitionNames();
+			for (String beanName : beanNames) {
+				log.info(beanName);
+			}		
+		}
 		while (entries.hasNext()) {
 			Entry<String, ArrayList<String>> entry = entries.next();
 			if (entry.getKey().equals(BEAN_NAME)) {

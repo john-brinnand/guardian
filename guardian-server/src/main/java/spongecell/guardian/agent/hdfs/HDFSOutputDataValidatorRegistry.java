@@ -10,23 +10,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.stereotype.Component;
 
 import spongecell.webhdfs.WebHdfsConfiguration;
 import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.workflow.config.framework.BeanConfigurations;
-import spongecell.workflow.config.repository.BetaGenericConfigurationRepository;
 import spongecell.workflow.config.repository.GenericConfigurationRepository;
 
 @Slf4j
 @Getter @Setter
-@Component
-@EnableConfigurationProperties(BetaGenericConfigurationRepository.class)
-@ComponentScan(value="hdfsOutputDataValidatorRegistry")
+@EnableConfigurationProperties(GenericConfigurationRepository.class)
 public class HDFSOutputDataValidatorRegistry {
-	private @Autowired BetaGenericConfigurationRepository configRepo;
+	private @Autowired GenericConfigurationRepository configRepo;
 
 	public HDFSOutputDataValidatorRegistry() { }
 
@@ -36,13 +31,8 @@ public class HDFSOutputDataValidatorRegistry {
 	
 	@PostConstruct
 	public void init() {
+		log.info("Initializing HDFSOutputDataValidatorRegistry registry.");
 		configRepo.addRegistryBeans(getClass());
-
-		String[] beanNames = configRepo.getApplicationContext().getBeanDefinitionNames();
-		for (String beanName : beanNames) {
-			log.info(beanName);
-		}	
-		log.info("foo");
 	}
 	
 	@Bean(name=HDFSOutputDataValidator.BEAN_NAME)
@@ -70,5 +60,4 @@ public class HDFSOutputDataValidatorRegistry {
 	public WebHdfsConfiguration buildWebHdfsConfig() {
 		return new WebHdfsConfiguration();
 	}
-	
 }

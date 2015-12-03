@@ -4,9 +4,9 @@ import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.APP;
 import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.FINAL_STATUS;
 import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.NAME;
 import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.STATE;
+import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.SUCCEEDED;
 import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.TRACKING_URL;
 import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.USER;
-import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.SUCCEEDED;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.util.Assert;
 
-import spongecell.guardian.agent.exception.GuardianWorkFlowException;
 import spongecell.webhdfs.exception.WebHdfsException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
