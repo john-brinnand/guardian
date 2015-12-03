@@ -24,12 +24,12 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 
 import spongecell.guardian.agent.exception.GuardianWorkFlowException;
+import spongecell.guardian.agent.yarn.resourcemonitor.ResourceMonitorAppAgentRegistry;
 import spongecell.webhdfs.exception.WebHdfsException;
 import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 

@@ -31,8 +31,8 @@ public class HDFSOutputDataValidatorRegistry {
 	
 	@PostConstruct
 	public void init() {
-		log.info("Initializing HDFSOutputDataValidatorRegistry registry.");
 		configRepo.addRegistryBeans(getClass());
+		log.info("Initialed HDFSOutputDataValidatorRegistry registry.");
 	}
 	
 	@Bean(name=HDFSOutputDataValidator.BEAN_NAME)
@@ -42,7 +42,7 @@ public class HDFSOutputDataValidatorRegistry {
 	})
 	@ConfigurationProperties(prefix=HDFSOutputDataValidator.BEAN_CONFIG_PROPS_PREFIX)
 	public HDFSOutputDataValidator buildHdfsOutputDataValidator () {
-		return new HDFSOutputDataValidator(configRepo);
+		return new HDFSOutputDataValidator(configRepo); 
 	}	
 	
 	@Bean(name=HDFSOutputDataValidator.WEBHDFS_WORKFLOW_BEAN_NAME)
