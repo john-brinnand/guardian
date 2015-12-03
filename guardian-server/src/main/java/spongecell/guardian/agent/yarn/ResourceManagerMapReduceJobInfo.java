@@ -77,7 +77,7 @@ public class ResourceManagerMapReduceJobInfo {
 				.writeValueAsString(jsonJobInfoStatus));	
 			
 			StringEntity entity = new StringEntity(jobInfoContent);
-			WebHdfsWorkFlow workFlow = buildWorkFlow(entity, appId, jobId);
+			WebHdfsWorkFlow workFlow = buildWorkFlow(entity, appId);
 			workFlow.execute();
 		} catch (WebHdfsException | URISyntaxException | 
 				IllegalStateException | IOException e) {
@@ -282,7 +282,7 @@ public class ResourceManagerMapReduceJobInfo {
 		return id;
 	}		
 	
-	private WebHdfsWorkFlow buildWorkFlow(StringEntity entity, String appId, String jobId) {
+	private WebHdfsWorkFlow buildWorkFlow(StringEntity entity, String appId) {
 		DateTimeFormatter customDTF = new DateTimeFormatterBuilder()
 	        .appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
 	        .appendValue(MONTH_OF_YEAR, 2)
@@ -296,7 +296,7 @@ public class ResourceManagerMapReduceJobInfo {
 			.addPathSegment(customDTF.format(LocalDate.now()))
 			.build();
 		
-		String filePrefix = appId + "_" + jobId + "_"; 
+		String filePrefix = appId + "_"; 
 		String relativePathFileName = filePrefix + jobInfoConfig.getFileName();		
 		String fileName = path.getFile().getPath() + File.separator + 
 			relativePathFileName;	

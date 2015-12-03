@@ -157,4 +157,10 @@ public class YarnResourceManagerAgent implements Agent {
 	public Agent buildAgent() {
 		return new YarnResourceManagerAgent();
 	}
+
+	@Override
+	public Object[] getStatus(Object[] args) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
