@@ -7,13 +7,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import spongecell.webhdfs.WebHdfsConfiguration;
+
 @Slf4j
-@ContextConfiguration(classes = { AnnotationTests.class })
+@ContextConfiguration(classes = { 
+		AnnotationTests.class, 
+		WebHdfsConfiguration.class })
 @EnableConfigurationProperties (AnnotationTests.TemplateProperties.class)
 public class AnnotationTests extends AbstractTestNGSpringContextTests{
 	@Autowired TemplateProperties properties;
@@ -21,7 +26,7 @@ public class AnnotationTests extends AbstractTestNGSpringContextTests{
 	private final static String ZOOKEEPER_CONNECT_VALUE = "192.168.33.10:2181";
 	private final static String GROUP_ID_VALUE = "testGroup";		
 	private final static String KAFKA_BROKERS = "192.168.33.10:9092";
-
+	private @Autowired ApplicationContext ctx;
 	/**
 	 * For this test to run successfully, the following properties must be
 	 * set in the environment:
@@ -63,4 +68,19 @@ public class AnnotationTests extends AbstractTestNGSpringContextTests{
 		
 		public TemplateProperties() {}
 	}
+	
+	@Test
+	public void validateWebHdfsConfig() {
+		WebHdfsConfiguration configA = (WebHdfsConfiguration) 
+				ctx.getBean(WebHdfsConfiguration.class);
+		configA.setBaseDir("foobar");
+
+		WebHdfsConfiguration configB = (WebHdfsConfiguration) 
+				ctx.getBean(WebHdfsConfiguration.class);
+
+		log.info(configA.getBaseDir());
+		log.info(configB.getBaseDir());
+		Assert.assertEquals(configA.getBaseDir(), "foobar");
+		Assert.assertEquals(configB.getBaseDir(), "/data");
+	}		
 }

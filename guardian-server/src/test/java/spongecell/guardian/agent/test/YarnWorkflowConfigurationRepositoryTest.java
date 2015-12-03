@@ -16,7 +16,7 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import spongecell.guardian.agent.hdfs.HDFSOutputDataValidator;
+import spongecell.guardian.agent.hdfs.HDFSOutputDataValidatorRegistry;
 import spongecell.guardian.agent.workflow.GuardianAgentWorkFlow;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.agent.yarn.YarnAgentConfigurationRegistry;
@@ -33,7 +33,8 @@ import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 @EnableConfigurationProperties ({ 
 	YarnAgentConfigurationRegistry.class,
 	WebHdfsConfiguration.class,
-	WebHdfsWorkFlow.Builder.class
+	WebHdfsWorkFlow.Builder.class,
+//	HDFSOutputDataValidatorRegistry.class
 })
 public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSpringContextTests {
 	@Autowired private ApplicationContext ctx;
@@ -68,38 +69,16 @@ public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSprin
 		YarnAgentConfigurationRegistry repo = ctx.getBean(
 				YarnAgentConfigurationRegistry.class);
 		
-		Iterator<Entry<String, String>> entries = repo.mapIterator();
-		
-		while (entries.hasNext()) {
-			Entry<String, String> entry = entries.next();
-			log.info("Entry - name {}, value {}", 
-				entry.getKey(), entry.getValue());
-					
-		}
-	}
-	
-	@Test
-	public void validateYarnAgentBeanConfigurationProperties() {
-		log.info("Validating.");
-		
-		YarnAgentConfigurationRegistry repo = ctx.getBean(
-				YarnAgentConfigurationRegistry.class);
-		
 		Iterator<Entry<String, ArrayList<String>>> entries = repo.agentIterator();
 		
 		while (entries.hasNext()) {
 			Entry<String, ArrayList<String>> entry = entries.next();
 			log.info("Entry - name {}, value {}", 
 				entry.getKey(), entry.getValue());
-			ArrayList<String> ids = entry.getValue();
-			for (String configId : ids) {
-				if (configId.equals(HDFSOutputDataValidator
-						.WEBHDFS_BEAN_CONFIG_PROPS_PREFIX)) {
-					WebHdfsConfiguration config = (WebHdfsConfiguration) ctx
-							.getBean(HDFSOutputDataValidator.WEBHDFS_BEAN_NAME);
-					Assert.assertNotNull(config);
-				}
-			}
+			Assert.assertNotNull(entry);
+			
+			Agent agent = (Agent) ctx.getBean(entry.getKey());
+			Assert.assertNotNull(agent);
 		}
 	}
 	
@@ -111,15 +90,15 @@ public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSprin
 		GuardianAgentWorkFlow workFlow = ctx.getBean(GuardianAgentWorkFlow.class);
 		
 		Iterator<Entry<String, ArrayList<String>>> entries = repo.agentIterator();
-		
+		int stepCount = 1;
 		while (entries.hasNext()) {
 			Entry<String, ArrayList<String>> entry = entries.next();
 			log.info("Entry - name {}, value {}", 
 				entry.getKey(), entry.getValue());
 			Agent agent = (Agent) ctx.getBean(entry.getKey());
-			workFlow.addEntry("step1", agent);
+			workFlow.addEntry("step" + stepCount, agent);
+			stepCount++;
 		}
-		// TODO - pass in the args.
 		workFlow.execute();
 	}	
 }

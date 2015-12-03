@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import javax.annotation.PostConstruct;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -15,17 +16,24 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 
-import spongecell.datasource.airstream.framework.BeanConfigurations;
 import spongecell.guardian.agent.hdfs.HDFSOutputDataValidator;
+import spongecell.guardian.agent.hdfs.HDFSOutputDataValidatorRegistry;
 import spongecell.webhdfs.WebHdfsConfiguration;
 import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.webhdfs.WebHdfsWorkFlow.Builder;
+import spongecell.workflow.config.framework.BeanConfigurations;
+import spongecell.workflow.config.repository.BetaGenericConfigurationRepository;
 import spongecell.workflow.config.repository.GenericConfigurationRepository;
 import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 
 
+@Slf4j
 @Getter
-@EnableConfigurationProperties({ GenericConfigurationRepository.class })
+@EnableConfigurationProperties({ 
+	GenericConfigurationRepository.class,
+	BetaGenericConfigurationRepository.class,
+	HDFSOutputDataValidatorRegistry.class
+})
 public class YarnAgentConfigurationRegistry implements IGenericConfigurationRepository {
 	@Autowired private GenericConfigurationRepository configRepo;
 
@@ -111,32 +119,44 @@ public class YarnAgentConfigurationRegistry implements IGenericConfigurationRepo
 	//*************************************************************
 	// HDFS Data Validator Agent.
 	//*************************************************************
+//	@Bean(name=HDFSOutputDataValidator.BEAN_NAME)
+//	@DependsOn(value={ 
+//		HDFSOutputDataValidator.WEBHDFS_BEAN_NAME, 
+//		HDFSOutputDataValidator.WEBHDFS_WORKFLOW_BEAN_NAME
+//	})
+//	@ConfigurationProperties(prefix=HDFSOutputDataValidator.BEAN_CONFIG_PROPS_PREFIX)
+//	public HDFSOutputDataValidator buildHdfsOutputDataValidator () {
+//		return new HDFSOutputDataValidator(configRepo);
+//	}	
+//	
+//	@Bean(name=HDFSOutputDataValidator.WEBHDFS_WORKFLOW_BEAN_NAME)
+//	@ConfigurationProperties(prefix=
+//		HDFSOutputDataValidator.WEBHDFS_WORKFLOW_CONFIG_PREFIX)
+//	@BeanConfigurations(include=false)
+//	public WebHdfsWorkFlow.Builder buildWebHdfsWorkFlow() {
+//		return new WebHdfsWorkFlow.Builder();
+//	}
+//	
+//	@Bean(name=HDFSOutputDataValidator.WEBHDFS_BEAN_NAME)
+//	@ConfigurationProperties(prefix=
+//		HDFSOutputDataValidator.WEBHDFS_BEAN_CONFIG_PROPS_PREFIX)
+//	@BeanConfigurations(parent=HDFSOutputDataValidator.BEAN_NAME)
+//	public WebHdfsConfiguration buildWebHdfsConfig() {
+//		return new WebHdfsConfiguration();
+//	}
+//	
+//	@Bean(name="hdfsOutputDataValidatorRegistry")
+//	@BeanConfigurations(include=true)
+//	public HDFSOutputDataValidatorRegistry buildHdfsOutputDataValidatorRegistry () {
+//		return new HDFSOutputDataValidatorRegistry();
+//	}	
+	
 	@Bean(name=HDFSOutputDataValidator.BEAN_NAME)
-	@DependsOn(value={ 
-		HDFSOutputDataValidator.WEBHDFS_BEAN_NAME, 
-		HDFSOutputDataValidator.WEBHDFS_WORKFLOW_BEAN_NAME
-	})
-	@ConfigurationProperties(prefix=HDFSOutputDataValidator.BEAN_CONFIG_PROPS_PREFIX)
+	@BeanConfigurations(include=true)
 	public HDFSOutputDataValidator buildHdfsOutputDataValidator () {
-		return new HDFSOutputDataValidator(configRepo);
+		return new HDFSOutputDataValidator();
 	}	
-	
-	@Bean(name=HDFSOutputDataValidator.WEBHDFS_WORKFLOW_BEAN_NAME)
-	@ConfigurationProperties(prefix=
-		HDFSOutputDataValidator.WEBHDFS_WORKFLOW_CONFIG_PREFIX)
-	@BeanConfigurations(include=false)
-	public WebHdfsWorkFlow.Builder buildWebHdfsWorkFlow() {
-		return new WebHdfsWorkFlow.Builder();
-	}
-	
-	@Bean(name=HDFSOutputDataValidator.WEBHDFS_BEAN_NAME)
-	@ConfigurationProperties(prefix=
-		HDFSOutputDataValidator.WEBHDFS_BEAN_CONFIG_PROPS_PREFIX)
-	@BeanConfigurations(parent=HDFSOutputDataValidator.BEAN_NAME)
-	public WebHdfsConfiguration buildWebHdfsConfig() {
-		return new WebHdfsConfiguration();
-	}
-	
+		
 	@Override
 	public <T> T getAgent(String agentId) {
 		return configRepo.getAgent(agentId);

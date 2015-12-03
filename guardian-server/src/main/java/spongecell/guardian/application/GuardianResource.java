@@ -133,7 +133,11 @@ public class GuardianResource {
 			workFlow = (IAgentWorkFlow) appContext.getBean(workFlowId);
 			workFlow.setId(workFlowId);
 			
-			String[] agentIds = node.get(WORKFLOW).get(AGENT_IDS).asText().split(COMMA); 
+			String[] agentIds = node
+				.get(WORKFLOW)
+				.get(AGENT_IDS).asText()
+				.split(COMMA);
+			
 			int count = 0;
 			String step = STEP;
 			for (String agentId : agentIds) {

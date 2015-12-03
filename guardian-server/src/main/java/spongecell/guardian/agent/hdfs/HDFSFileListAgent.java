@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 
-import javax.annotation.PostConstruct;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +19,7 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 
@@ -44,19 +43,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /**
  * @author jbrinnand
  */
+@Scope("prototype")
 @Slf4j
 @Getter @Setter
 @EnableConfigurationProperties({ WebHdfsConfiguration.class,  WebHdfsWorkFlow.Builder.class  })
 public class HDFSFileListAgent implements Agent {
 	private @Autowired WebHdfsConfiguration webHdfsConfig;	
 	private @Autowired WebHdfsWorkFlow.Builder webHdfsWorkFlowBuilder;
-	
-	@PostConstruct 
-	public void init () {}
+	private String instance;
 	
 	@Bean(name="hdfsListDirectoryAgent")
 	public Agent buildAgent() {
-		return new HDFSFileListAgent();
+		return this;
 	}
 	
 	/**
@@ -65,6 +63,7 @@ public class HDFSFileListAgent implements Agent {
 	@Override
 	public Object[] getStatus () {
 		log.info("********** Getting HDFS status.**********");
+		
 		
 		Object[] facts =  null;
 		String path = webHdfsConfig.getBaseDir() + "/" + webHdfsConfig.getFileName();
@@ -136,5 +135,11 @@ public class HDFSFileListAgent implements Agent {
 		Object[] facts = { hdfsDir, event, slackClient };
 		
 		return facts;
+	}
+
+	@Override
+	public Object[] getStatus(Object[] args) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
