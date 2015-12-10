@@ -16,7 +16,9 @@ import org.springframework.context.annotation.Bean;
 
 import spongecell.guardian.agent.hdfs.HDFSOutputDataValidator;
 import spongecell.guardian.agent.hdfs.HDFSOutputDataValidatorRegistry;
+import spongecell.guardian.agent.yarn.jobinfo.ResourceManagerMapReduceJobInfoAgent;
 import spongecell.guardian.agent.yarn.jobinfo.ResourceManagerMapReduceJobInfoRegistry;
+import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorAgent;
 import spongecell.guardian.agent.yarn.resourcemonitor.ResourceMonitorAppAgentRegistry;
 import spongecell.workflow.config.framework.BeanConfigurations;
 import spongecell.workflow.config.repository.BetaGenericConfigurationRepository;

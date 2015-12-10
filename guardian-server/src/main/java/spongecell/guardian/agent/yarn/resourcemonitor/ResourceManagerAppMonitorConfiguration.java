@@ -1,4 +1,4 @@
-package spongecell.guardian.agent.yarn;
+package spongecell.guardian.agent.yarn.resourcemonitor;
 
 import lombok.Getter;
 import lombok.Setter;

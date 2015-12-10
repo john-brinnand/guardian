@@ -1,4 +1,4 @@
-package spongecell.guardian.agent.yarn;
+package spongecell.guardian.agent.yarn.jobinfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,6 +33,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import spongecell.guardian.agent.hdfs.HDFSOutputDataValidatorRegistry;
+import spongecell.guardian.agent.yarn.Agent;
+import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorAgent;
+import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorConfiguration;
 import spongecell.guardian.agent.yarn.resourcemonitor.ResourceMonitorAppAgentRegistry;
 import spongecell.webhdfs.FilePath;
 import spongecell.webhdfs.WebHdfsConfiguration;
@@ -134,7 +137,11 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 	public void getMapReduceJobInfo(String appId, String appStatus) {
 		try {
 			CloseableHttpResponse response = requestAppMapReduceJobs(appId);
-			String jobContent = getContent(response.getEntity().getContent());
+			String jobContent; 
+			if (response == null) {
+				return;
+			}
+			jobContent = getContent(response.getEntity().getContent());
 			String jobId = getJobId(jobContent, appStatus);
 			if (jobId == null) {
 				return;

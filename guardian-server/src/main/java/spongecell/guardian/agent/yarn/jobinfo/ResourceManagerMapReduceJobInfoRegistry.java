@@ -12,9 +12,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 
-import spongecell.guardian.agent.yarn.ResourceManagerAppMonitorAgent;
-import spongecell.guardian.agent.yarn.ResourceManagerAppMonitorConfiguration;
-import spongecell.guardian.agent.yarn.ResourceManagerMapReduceJobInfoAgent;
+import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorAgent;
+import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorConfiguration;
 import spongecell.webhdfs.WebHdfsConfiguration;
 import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.webhdfs.WebHdfsWorkFlow.Builder;

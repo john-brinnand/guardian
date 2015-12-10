@@ -12,10 +12,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 
-import spongecell.guardian.agent.yarn.ResourceManagerAppMonitorAgent;
-import spongecell.guardian.agent.yarn.ResourceManagerAppMonitorConfiguration;
-import spongecell.webhdfs.WebHdfsConfiguration;
-import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.workflow.config.framework.BeanConfigurations;
 import spongecell.workflow.config.repository.GenericConfigurationRepository;
 
@@ -42,7 +38,7 @@ public class ResourceMonitorAppAgentRegistry {
 	//*************************************************************
 	@Bean(name=ResourceManagerAppMonitorAgent.BEAN_NAME)
 	@DependsOn(value={ 
-		ResourceManagerAppMonitorAgent.BEAN_CONFIG_NAME 
+		ResourceManagerAppMonitorAgent.BEAN_CONFIG_NAME
 	})
 	public ResourceManagerAppMonitorAgent buildResourceManagerAppAgent () {
 		return new ResourceManagerAppMonitorAgent(configRepo);

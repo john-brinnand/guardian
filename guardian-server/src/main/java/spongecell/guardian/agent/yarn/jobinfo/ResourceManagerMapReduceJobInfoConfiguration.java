@@ -1,4 +1,4 @@
-package spongecell.guardian.agent.yarn;
+package spongecell.guardian.agent.yarn.jobinfo;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package spongecell.guardian.agent.yarn;
+package spongecell.guardian.agent.yarn.resourcemonitor;
 
 import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.APP;
 import static spongecell.guardian.agent.yarn.model.ResourceManagerAppKeys.FINAL_STATUS;
@@ -24,12 +24,12 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 
 import spongecell.guardian.agent.exception.GuardianWorkFlowException;
-import spongecell.guardian.agent.yarn.resourcemonitor.ResourceMonitorAppAgentRegistry;
+import spongecell.guardian.agent.yarn.Agent;
+import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorConfiguration.RunStates;
 import spongecell.webhdfs.exception.WebHdfsException;
 import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 
@@ -42,10 +42,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Slf4j
 @Getter
-@EnableConfigurationProperties({ 
-	ResourceManagerAppMonitorConfiguration.class ,
-	ResourceManagerMapReduceJobInfo.class
-})
 public class ResourceManagerAppMonitorAgent implements Agent {
 	private ResourceManagerAppMonitorConfiguration config;
 	private RequestConfig requestConfig;
