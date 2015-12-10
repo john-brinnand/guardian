@@ -16,11 +16,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import spongecell.guardian.agent.exception.GuardianWorkFlowException;
-import spongecell.guardian.agent.hdfs.HDFSFileListAgent;
 import spongecell.guardian.agent.scheduler.GuardianWorkFlowScheduler;
 import spongecell.guardian.agent.workflow.GuardianAgentWorkFlow;
 import spongecell.guardian.agent.yarn.Agent;
-import spongecell.guardian.agent.yarn.YarnResourceManagerAgent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,9 +32,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @ContextConfiguration(classes = { 
 	GuardianAgentWorkFlowTest.class, 
 	GuardianAgentWorkFlow.class,
-	YarnResourceManagerAgent.class,
-	GuardianWorkFlowScheduler.class,
-	HDFSFileListAgent.class
+	GuardianWorkFlowScheduler.class
 })
 public class GuardianAgentWorkFlowTest extends AbstractTestNGSpringContextTests{
 	private @Autowired GuardianAgentWorkFlow workFlow;

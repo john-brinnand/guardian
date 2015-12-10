@@ -16,7 +16,6 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import spongecell.guardian.agent.hdfs.HDFSOutputDataValidatorRegistry;
 import spongecell.guardian.agent.workflow.GuardianAgentWorkFlow;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.agent.yarn.YarnAgentConfigurationRegistry;
@@ -34,7 +33,6 @@ import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 	YarnAgentConfigurationRegistry.class,
 	WebHdfsConfiguration.class,
 	WebHdfsWorkFlow.Builder.class,
-//	HDFSOutputDataValidatorRegistry.class
 })
 public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSpringContextTests {
 	@Autowired private ApplicationContext ctx;
@@ -100,7 +98,7 @@ public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSprin
 			stepCount++;
 		}
 		int count = 0;
-		int maxCount = 7;
+		int maxCount = 10;
 		do  {
 			workFlow.execute();
 			Thread.sleep(1000);

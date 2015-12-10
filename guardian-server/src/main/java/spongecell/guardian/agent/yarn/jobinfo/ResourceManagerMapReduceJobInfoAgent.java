@@ -1,5 +1,9 @@
 package spongecell.guardian.agent.yarn.jobinfo;
 
+import static java.time.temporal.ChronoField.DAY_OF_MONTH;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+import static java.time.temporal.ChronoField.YEAR;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,16 +31,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.util.ByteArrayBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import spongecell.guardian.agent.hdfs.HDFSOutputDataValidatorRegistry;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorAgent;
 import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorConfiguration;
-import spongecell.guardian.agent.yarn.resourcemonitor.ResourceMonitorAppAgentRegistry;
 import spongecell.webhdfs.FilePath;
 import spongecell.webhdfs.WebHdfsConfiguration;
 import spongecell.webhdfs.WebHdfsOps;
@@ -44,9 +41,11 @@ import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.webhdfs.WebHdfsWorkFlow.Builder;
 import spongecell.webhdfs.exception.WebHdfsException;
 import spongecell.workflow.config.repository.IGenericConfigurationRepository;
-import static java.time.temporal.ChronoField.DAY_OF_MONTH;
-import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
-import static java.time.temporal.ChronoField.YEAR;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.util.ByteArrayBuilder;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j
 public class ResourceManagerMapReduceJobInfoAgent implements Agent {
@@ -110,7 +109,6 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 
 	@Override
 	public Object[] getStatus(Object[] args) {
-		// TODO Auto-generated method stub
 		log.info("Args are: {}", args);
 		JsonNode jsonAppStatus = (JsonNode)args[0];
 		if (jsonAppStatus.get("app").get("state").asText().equals("UNKNOWN")) {
@@ -180,6 +178,7 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 	 */
 	public CloseableHttpResponse requestAppMapReduceJobs(String appId) 
 		throws WebHdfsException{
+		log.info("ApplicationId is : {}", appId);
 		CloseableHttpClient httpClient = HttpClients.createDefault();
 		URI uri = null;
 		try {
@@ -208,7 +207,7 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 			Assert.isTrue(response.getStatusLine().getStatusCode() == 200,
 					"Response code indicates a failed GET operation");
 		} catch (IOException e) {
-			log.error("IOException timed out {} ", e);
+			log.error("IOException timed out {} ", e.getCause());
 			if (e instanceof ConnectionPoolTimeoutException) {
 				log.info("Connection timed out {} ", e.getCause());
 			}
@@ -377,7 +376,7 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 		
 		WebHdfsConfiguration config = workFlow.getConfig();
 		String filePrefix = appId + "_"; 
-		String relativePathFileName = filePrefix + workFlow.getConfig().getFileName();		
+		String relativePathFileName = filePrefix + workFlow.getConfig().getFileNameSuffix();
 		String fileName = path.getFile().getPath() + File.separator + 
 			relativePathFileName;	
 		
