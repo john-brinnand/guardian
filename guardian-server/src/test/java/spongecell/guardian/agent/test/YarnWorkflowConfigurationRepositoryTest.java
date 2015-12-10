@@ -100,12 +100,11 @@ public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSprin
 			stepCount++;
 		}
 		int count = 0;
-		int maxCount = 4;
+		int maxCount = 7;
 		do  {
 			workFlow.execute();
-			Thread.sleep(2000);
+			Thread.sleep(1000);
 			count++;
 		} while (count < maxCount);
-
 	}	
 }
