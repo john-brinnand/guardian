@@ -79,7 +79,18 @@ public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSprin
 			Assert.assertNotNull(agent);
 		}
 	}
-	
+	/**
+	 * This test requires the wordcount.sh script to be
+	 * running on a hadoop cluster. This, in turn, implies
+	 * that the local hadoop cluster must have data.
+	 * 
+	 * The number of iterations (maxCount) is determined empirically
+	 * such that the job or jobs will complete prior to the test. This
+	 * value can be fine tuned to the type of MapReduce jobs being run.
+	 * 
+	 * @throws URISyntaxException
+	 * @throws InterruptedException
+	 */
 	@Test
 	public void validateYarnAgentWorkFlow() throws URISyntaxException, InterruptedException {
 		log.info("Validating.");
@@ -98,7 +109,7 @@ public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSprin
 			stepCount++;
 		}
 		int count = 0;
-		int maxCount = 10;
+		int maxCount = 15;
 		do  {
 			workFlow.execute();
 			Thread.sleep(1000);

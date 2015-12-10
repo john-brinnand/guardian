@@ -7,7 +7,6 @@ import java.util.Map.Entry;
 import javax.annotation.PostConstruct;
 
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -26,7 +25,6 @@ import spongecell.workflow.config.repository.GenericConfigurationRepository;
 import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 
 
-@Slf4j
 @Getter
 @EnableConfigurationProperties({ 
 	GenericConfigurationRepository.class,

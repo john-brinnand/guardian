@@ -8,7 +8,6 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import spongecell.guardian.agent.hdfs.HDFSOutputDataValidator;
 import spongecell.guardian.agent.workflow.GuardianAgentWorkFlow;
-import spongecell.guardian.agent.yarn.ResourceManagerAppMonitorScheduler;
 import spongecell.guardian.handler.KieMemoryFileSystemSessionHandler;
 
 
@@ -16,7 +15,6 @@ import spongecell.guardian.handler.KieMemoryFileSystemSessionHandler;
 @EnableAutoConfiguration
 @EnableConfigurationProperties({
 	GuardianResourceConfiguration.class, 
-	ResourceManagerAppMonitorScheduler.class,
 	KieMemoryFileSystemSessionHandler.class,
 	GuardianAgentWorkFlow.class,
 	HDFSOutputDataValidator.class
