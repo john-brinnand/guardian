@@ -13,6 +13,8 @@ public class GuardianAgentWorkFlowKeys {
 	public static final String CREATE = "create";
 	public static final String STEP = "step";
 	public static final String COMMA = ",";
+	public static final String APP_STATUS = "appStatus";
+	public static final String JOB_STATUS_FILE = "jobStatusFile";
 	
 	public enum STATUS {
 		STARTED, COMPLETED, FAILED

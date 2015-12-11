@@ -31,6 +31,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 
+import spongecell.guardian.agent.util.Args;
+import spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorAgent;
 import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorConfiguration;
@@ -102,15 +104,15 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 	}	
 
 	@Override
-	public Object[] getStatus() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Object[] getStatus(Object[] args) {
-		log.info("Args are: {}", args);
-		JsonNode jsonAppStatus = (JsonNode)args[0];
+	public Args getStatus(Args args) {
+		log.info("Args are: {}", args.getArgs());
+		if (((JsonNode)args.getMap().get(
+				GuardianAgentWorkFlowKeys.APP_STATUS)).isNull()) {
+			return args;
+		}
+		JsonNode jsonAppStatus = (JsonNode)args.getMap().get(
+				GuardianAgentWorkFlowKeys.APP_STATUS);
+		
 		if (jsonAppStatus.get("app").get("state").asText().equals("UNKNOWN")) {
 			return args;
 		}
@@ -119,11 +121,37 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 		try {
 			log.info(new ObjectMapper().writerWithDefaultPrettyPrinter()
 					.writeValueAsString(jsonAppStatus));
-			getMapReduceJobInfo(appId, jsonAppStatus.toString());
+			getMapReduceJobInfo(appId, jsonAppStatus.toString(), args);
 		} catch (JsonProcessingException e) {
 			log.info("ERROR - AppStatus arg is invalid. ", e);
 		}
-		return args; 
+		return args; 		
+	}
+	
+	@Override
+	public Object[] getStatus() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public Object[] getStatus(Object[] args) {
+//		log.info("Args are: {}", args);
+//		JsonNode jsonAppStatus = (JsonNode)args[0];
+//		if (jsonAppStatus.get("app").get("state").asText().equals("UNKNOWN")) {
+//			return args;
+//		}
+//		String appId = jsonAppStatus.get("app").get("id").asText();
+//		
+//		try {
+//			log.info(new ObjectMapper().writerWithDefaultPrettyPrinter()
+//					.writeValueAsString(jsonAppStatus));
+//			getMapReduceJobInfo(appId, jsonAppStatus.toString(), jobInfoArgs);
+//		} catch (JsonProcessingException e) {
+//			log.info("ERROR - AppStatus arg is invalid. ", e);
+//		}
+//		return args; 
+		return null;
 	}
 
 	@Override
@@ -132,7 +160,7 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 		return null;
 	}
 
-	public void getMapReduceJobInfo(String appId, String appStatus) {
+	public void getMapReduceJobInfo(String appId, String appStatus, Args args) {
 		try {
 			CloseableHttpResponse response = requestAppMapReduceJobs(appId);
 			String jobContent; 
@@ -156,7 +184,7 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 				.writeValueAsString(jsonJobInfoStatus));	
 			
 			StringEntity entity = new StringEntity(jobInfoContent);
-			WebHdfsWorkFlow workFlow = buildWorkFlow(entity, appId);
+			WebHdfsWorkFlow workFlow = buildWorkFlow(entity, appId, args);
 			workFlow.execute();
 		} catch (WebHdfsException | URISyntaxException | 
 				IllegalStateException | IOException e) {
@@ -360,7 +388,7 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 		return id;
 	}		
 	
-	private WebHdfsWorkFlow buildWorkFlow(StringEntity entity, String appId) {
+	private WebHdfsWorkFlow buildWorkFlow(StringEntity entity, String appId, Args args) {
 		DateTimeFormatter customDTF = new DateTimeFormatterBuilder()
 	        .appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
 	        .appendValue(MONTH_OF_YEAR, 2)
@@ -379,6 +407,7 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 		String relativePathFileName = filePrefix + workFlow.getConfig().getFileNameSuffix();
 		String fileName = path.getFile().getPath() + File.separator + 
 			relativePathFileName;	
+		args.addArg(GuardianAgentWorkFlowKeys.JOB_STATUS_FILE, relativePathFileName);
 		
 		WebHdfsWorkFlow workFlow = builder
 			.path(path.getFile().getPath())
@@ -405,5 +434,5 @@ public class ResourceManagerMapReduceJobInfoAgent implements Agent {
 				config.getGroup())
 			.build();		
 		return workFlow;
-	}	
+	}
 }

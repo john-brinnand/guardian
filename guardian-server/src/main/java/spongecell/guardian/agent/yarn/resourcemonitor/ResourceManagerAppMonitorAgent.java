@@ -28,8 +28,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 
 import spongecell.guardian.agent.exception.GuardianWorkFlowException;
+import spongecell.guardian.agent.util.Args;
+import spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys;
 import spongecell.guardian.agent.yarn.Agent;
-import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorConfiguration.RunStates;
 import spongecell.webhdfs.exception.WebHdfsException;
 import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 
@@ -83,6 +84,59 @@ public class ResourceManagerAppMonitorAgent implements Agent {
 		// TODO Auto-generated method stub
 		log.info("Getting status");
 		return null;
+	}
+	
+
+	@Override
+	public Args getStatus(Args args) {
+		String[] users = config.getUsers();
+		String appId = null; 
+		CloseableHttpResponse response = null; 
+		int retryCount = 5;
+		do {
+			response = requestResourceManagerAppsStatus();
+			response.getStatusLine().getStatusCode();
+
+			// Get the application's id.
+			// **************************
+			try {
+				InputStream is = response.getEntity().getContent();
+				appId = getUserAppId(users, is);
+				Thread.sleep(3000);
+				log.info("AppId is: {} ", appId);
+				response.close();
+				retryCount--;
+			} catch (IllegalStateException | IOException | InterruptedException e) {
+				throw new GuardianWorkFlowException("ERROR retrieving the App's status.", e);
+			}
+		} while (appId == null && retryCount > 0);
+		
+		if (appId == null) {
+			ObjectNode node = JsonNodeFactory.instance.objectNode();
+			node.set(APP, JsonNodeFactory.instance.objectNode());
+			((ObjectNode)node.get(APP)).put(STATE, "UNKNOWN");
+			((ObjectNode)node.get(APP)).put(FINAL_STATUS, "UNKNOWN");
+			args.addArg(GuardianAgentWorkFlowKeys.APP_STATUS, node);
+			return args;
+		}
+		
+		// Extract the appId, return it as a fact.
+		//*****************************************
+		response = requestAppStatus(appId);
+		
+		JsonNode jsonAppStatus = null;
+		String appStatus;
+		try {
+			appStatus = getContent(response.getEntity().getContent());
+			jsonAppStatus = new ObjectMapper().readTree(appStatus);
+			log.debug(new ObjectMapper().writerWithDefaultPrettyPrinter()
+				.writeValueAsString(jsonAppStatus));
+			response.close();
+		} catch (IllegalStateException | IOException e) {
+			throw new GuardianWorkFlowException("ERROR retrieving the App's status.", e);
+		}
+		args.addArg(GuardianAgentWorkFlowKeys.APP_STATUS, jsonAppStatus);
+		return args;	
 	}
 
 	@Override

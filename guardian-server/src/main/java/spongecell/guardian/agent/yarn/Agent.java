@@ -2,6 +2,8 @@ package spongecell.guardian.agent.yarn;
 
 import org.springframework.context.annotation.Bean;
 
+import spongecell.guardian.agent.util.Args;
+
 
 /**
  * @author jbrinnand
@@ -15,6 +17,8 @@ public interface Agent {
 	public abstract Object[] getStatus();
 	
 	public abstract Object[] getStatus(Object[] args);
+	
+	public abstract Args getStatus(Args args);
 	
 	/**
 	 * This method must contain a name for the 

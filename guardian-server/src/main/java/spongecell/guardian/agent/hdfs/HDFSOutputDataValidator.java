@@ -1,14 +1,22 @@
 package spongecell.guardian.agent.hdfs;
 
+import static java.time.temporal.ChronoField.DAY_OF_MONTH;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+import static java.time.temporal.ChronoField.YEAR;
 import static spongecell.webhdfs.WebHdfsParams.FILE;
 import static spongecell.webhdfs.WebHdfsParams.FILE_STATUS;
 import static spongecell.webhdfs.WebHdfsParams.FILE_STATUSES;
 import static spongecell.webhdfs.WebHdfsParams.TYPE;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.text.ParseException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.SignStyle;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -23,10 +31,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 
 import spongecell.guardian.agent.exception.GuardianWorkFlowException;
+import spongecell.guardian.agent.util.Args;
+import spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.model.HDFSDirectory;
 import spongecell.guardian.notification.GuardianEvent;
 import spongecell.guardian.notification.SlackGuardianWebHook;
+import spongecell.webhdfs.FilePath;
 import spongecell.webhdfs.WebHdfsConfiguration;
 import spongecell.webhdfs.WebHdfsOps;
 import spongecell.webhdfs.WebHdfsWorkFlow;
@@ -35,6 +46,7 @@ import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -88,66 +100,173 @@ public class HDFSOutputDataValidator implements Agent {
 			}
 		} 
 	} 
-	
 	@Override
-	public Object[] getStatus(Object[] args) {
+	public Args getStatus(Args args) {
 		log.info("********** Getting HDFS status.**********");
-		
 		WebHdfsConfiguration webHdfsConfig = workFlow.getConfig();
-		Object[] facts =  null;
-		String path = webHdfsConfig.getBaseDir() + "/" + webHdfsConfig.getFileName();
-		log.info(path);
+		String jobStatusFileName = (String) args.getMap().get(
+				GuardianAgentWorkFlowKeys.JOB_STATUS_FILE);
+		if (jobStatusFileName == null) {
+			return args;
+		}
+		log.info("Job status location: {} ", webHdfsConfig.getBaseDir() + "/" +   
+			args.getMap().get(GuardianAgentWorkFlowKeys.JOB_STATUS_FILE));
 		
-		WebHdfsWorkFlow workFlow = builder
-			.path(path)
-			.addEntry("ListDirectoryStatus", 
-					WebHdfsOps.LISTSTATUS, 
-					HttpStatus.OK, 
-					webHdfsConfig.getBaseDir())
+		// TODO - DateTimeFormaater and FilePath should be in a utility class
+		DateTimeFormatter customDTF = new DateTimeFormatterBuilder()
+        	.appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
+        	.appendValue(MONTH_OF_YEAR, 2)
+        	.appendValue(DAY_OF_MONTH, 2)
+        	.toFormatter();	
+		
+		FilePath filePath = new FilePath.Builder()
+			.addPathSegment(workFlow.getConfig().getBaseDir())
+			.addPathSegment(customDTF.format(LocalDate.now()))
+			.addPathSegment(jobStatusFileName)
 			.build();
+			
+		log.info("Path parent is: {}", filePath.getFile().getParent());
+		
+		
+//		WebHdfsWorkFlow workFlow = builder
+//			.path(filePath.getFile().getParent())
+//			.addEntry("GetFileStatus", 
+//					WebHdfsOps.GETFILESTATUS, 
+//					HttpStatus.OK, 
+//					jobStatusFileName)
+//			.build();
 
-		try {
-			CloseableHttpResponse response = workFlow.execute();
-			int responseCode = HttpStatus.OK.value();  
-			Assert.isTrue(response.getStatusLine().getStatusCode() == responseCode, 
-					"Response code indicates a failed write: " + 
-					response.getStatusLine().getStatusCode());
+			try {
+				JsonNode jobStatus = readJobInfoStatusFile(filePath);
+			} catch (IllegalStateException | IOException | URISyntaxException e) {
+				log.error("Failed to read job status: {} ", e);
+				throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
+			}
 			
-			ArrayNode fileStatus = getFileStatus(response);
+//			CloseableHttpResponse response = workFlow.execute();
+//			int responseCode = HttpStatus.OK.value();  
+//			Assert.isTrue(response.getStatusLine().getStatusCode() == responseCode, 
+//					"Response code indicates a failed read : " + 
+//					response.getStatusLine().getStatusCode());
 			
-			facts = createFacts(fileStatus, "/data/test-output1");
+			// TODO get the output directory from the jobInfoStatusFile and
+			// use it to access the output directory and the files within it.
+//			JsonNode fileStatus = getFileStatus(response);
 			
-		} catch (URISyntaxException | ParseException | IOException e) {
-			throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
-		} 
-		return facts;	
+			
+//			createFacts(fileStatus, "/data/test-output1", args);
+			
+//		} catch (URISyntaxException | ParseException | IOException e) {
+		return args;		
+	}	
+	
+	public Object[] getStatus(Object[] args) {
+//		log.info("********** Getting HDFS status.**********");
+//		
+//		WebHdfsConfiguration webHdfsConfig = workFlow.getConfig();
+//		Object[] facts =  null;
+//		String path = webHdfsConfig.getBaseDir() + "/" + webHdfsConfig.getFileName();
+//		log.info(path);
+//		
+//		WebHdfsWorkFlow workFlow = builder
+//			.path(path)
+//			.addEntry("ListDirectoryStatus", 
+//					WebHdfsOps.LISTSTATUS, 
+//					HttpStatus.OK, 
+//					webHdfsConfig.getBaseDir())
+//			.build();
+//
+//		try {
+//			CloseableHttpResponse response = workFlow.execute();
+//			int responseCode = HttpStatus.OK.value();  
+//			Assert.isTrue(response.getStatusLine().getStatusCode() == responseCode, 
+//					"Response code indicates a failed write: " + 
+//					response.getStatusLine().getStatusCode());
+//			
+//			JsonNode fileStatus = getFileStatus(response);
+//			log.info("Job Info File Status is: {} ",
+//				new ObjectMapper().writerWithDefaultPrettyPrinter()
+//					.writeValueAsString(fileStatus));
+//			
+//			readJobInfoStatusFile(fileStatus);
+//			
+//			// TODO get the output directory from the jobInfoStatusFile and
+//			// use it to access the output directory and the files within it.
+////			facts = createFacts(fileStatus, "/data/test-output1", new Args());
+//			
+//		} catch (URISyntaxException | ParseException | IOException e) {
+//			throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
+//		} 
+		return null;	
 	}
 
-	private ArrayNode getFileStatus(CloseableHttpResponse response) 
+//	private ArrayNode getFileStatus(CloseableHttpResponse response) 
+//			throws JsonParseException, JsonMappingException, ParseException, IOException {
+//		ObjectNode dirStatus = new ObjectMapper().readValue(
+//			EntityUtils.toString(response.getEntity()), 
+//			new TypeReference<ObjectNode>() {
+//		});
+//		log.info("Directory status is: {} ", new ObjectMapper()
+//			.writerWithDefaultPrettyPrinter()
+//			.writeValueAsString(dirStatus));
+//		
+//		ArrayNode fileStatus  = new ObjectMapper().readValue(dirStatus
+//			.get(FILE_STATUSES)
+//			.get(FILE_STATUS).toString(),
+//			new TypeReference<ArrayNode>() { 
+//		});
+//		for (int i = 0; i < fileStatus.size(); i++) {
+//			JsonNode fileStatusNode = fileStatus.get(i);
+//			Assert.isTrue(fileStatusNode.get(TYPE).asText().equals(FILE), 
+//				"ERROR - cannot read the Node. It is not a file: " 
+//				+ fileStatusNode.get(TYPE).asText());
+//		}		
+//		return fileStatus;
+//	}
+	/**
+	 * curl -i -L "http://<HOST>:<PORT>/webhdfs/v1/<PATH>?op=OPEN
+                    [&offset=<LONG>][&length=<LONG>][&buffersize=<INT>]"
+	 * @return
+	 * @throws URISyntaxException 
+	 * @throws IOException 
+	 * @throws IllegalStateException 
+	 */
+	private JsonNode readJobInfoStatusFile(FilePath jobInfoFileStatusPath)
+			throws URISyntaxException, IllegalStateException, IOException {
+		WebHdfsWorkFlow workFlow = builder
+				.path(jobInfoFileStatusPath.getFile().getParent())
+				.addEntry("OpenReadFile", 
+						WebHdfsOps.OPENANDREAD, 
+						HttpStatus.OK, 
+						jobInfoFileStatusPath.getFileName())
+				.build();
+		CloseableHttpResponse response = workFlow.execute();
+		String content = getContent(response.getEntity().getContent());
+		JsonNode jobStatus = new ObjectMapper() .readTree(content);
+		log.info("Job status file content is: {} ", new ObjectMapper()
+			.writerWithDefaultPrettyPrinter()
+			.writeValueAsString(jobStatus));	
+		return jobStatus;
+	}
+	
+	private JsonNode getFileStatus(CloseableHttpResponse response) 
 			throws JsonParseException, JsonMappingException, ParseException, IOException {
-		ObjectNode dirStatus = new ObjectMapper().readValue(
+		ObjectNode jsonFileStatus = new ObjectMapper().readValue(
 			EntityUtils.toString(response.getEntity()), 
 			new TypeReference<ObjectNode>() {
 		});
-		log.info("Directory status is: {} ", new ObjectMapper()
+		log.info("File status is: {} ", new ObjectMapper()
 			.writerWithDefaultPrettyPrinter()
-			.writeValueAsString(dirStatus));
+			.writeValueAsString(jsonFileStatus));
 		
-		ArrayNode fileStatus  = new ObjectMapper().readValue(dirStatus
-			.get(FILE_STATUSES)
-			.get(FILE_STATUS).toString(),
-			new TypeReference<ArrayNode>() { 
-		});
-		for (int i = 0; i < fileStatus.size(); i++) {
-			JsonNode fileStatusNode = fileStatus.get(i);
-			Assert.isTrue(fileStatusNode.get(TYPE).asText().equals(FILE), 
+		JsonNode fileStatus = jsonFileStatus.get("FileStatus");
+		Assert.isTrue(fileStatus.get(TYPE).asText().equals(FILE), 
 				"ERROR - cannot read the Node. It is not a file: " 
-				+ fileStatusNode.get(TYPE).asText());
-		}		
+				+ fileStatus.get(TYPE).asText());
 		return fileStatus;
-	}
+	}	
 		
-	private Object[] createFacts (ArrayNode fileStatus, String path) {
+	private Object[] createFacts (ArrayNode fileStatus, String path, Args args) {
 		HDFSDirectory hdfsDir = new HDFSDirectory();
 		hdfsDir.setNumChildren(fileStatus.size());
 		hdfsDir.setOwner("root");
@@ -162,6 +281,9 @@ public class HDFSOutputDataValidator implements Agent {
 		SlackGuardianWebHook slackClient = new SlackGuardianWebHook();
 		
 		Object[] facts = { hdfsDir, event, slackClient };
+		args.addArg("hdfsDataValidatorHdfsFact", hdfsDir);
+		args.addArg("hdfsDataValidatorEventFact", event);
+		args.addArg("hdfsDataValidatorSlackClient", slackClient);
 		
 		return facts;
 	}
@@ -177,4 +299,23 @@ public class HDFSOutputDataValidator implements Agent {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+
+	/**
+	 * Utility: getContent from a stream.
+	 * 
+	 * @param is
+	 * @return
+	 * @throws IOException
+	 */
+	private String getContent(InputStream is) throws IOException {
+		ByteArrayBuilder bab = new ByteArrayBuilder();
+		int value;
+		while ((value = is.read()) != -1) {
+			bab.append(value);
+		}
+		String content = new String(bab.toByteArray());
+		bab.close();
+		return content;
+	}	
 }

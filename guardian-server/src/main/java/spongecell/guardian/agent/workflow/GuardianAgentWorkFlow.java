@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
+import spongecell.guardian.agent.util.Args;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.handler.KieMemoryFileSystemSessionHandler;
 
@@ -98,15 +99,15 @@ public class GuardianAgentWorkFlow implements IAgentWorkFlow {
 	public void execute() throws URISyntaxException {
 		Set<Entry<String, Agent>>entries = workFlow.entrySet();
 		ArrayList<Object> findings = new ArrayList<Object>(); 
-		Object[] args = new Object[1];
+		Args args = new Args();
 		for (Entry<String, Agent>entry : entries) {
 			Agent agent = entry.getValue();
-			Object[] facts = agent.getStatus(args);
-			for (Object fact : facts) {
-				findings.add(fact);
-			}
+			Args facts = agent.getStatus(args);
 			args = facts;
 		}
+		for (Object fact : args.getArgs()) {
+			findings.add(fact);
+		}	
 		validateFindings(findings.toArray());
 	}	
 

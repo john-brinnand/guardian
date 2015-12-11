@@ -114,6 +114,7 @@ public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSprin
 			workFlow.execute();
 			Thread.sleep(1000);
 			count++;
-		} while (count < maxCount);
+		} while (true);
+//		} while (count < maxCount);
 	}	
 }
