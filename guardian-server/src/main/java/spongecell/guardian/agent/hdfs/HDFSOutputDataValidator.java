@@ -250,12 +250,21 @@ public class HDFSOutputDataValidator implements Agent {
 		return jobStatus;
 	}
 	
-	private JsonNode getJobOutputDir (JsonNode jobStatus) {
+	private String getJobOutputDir (JsonNode jobStatus) {
 		Iterator<JsonNode> properties = jobStatus.get("conf").get("property").iterator();
+		String outputDir = null;
 		while (properties.hasNext()) {
-			log.info(properties.next().toString());
+			JsonNode property = properties.next();
+			log.debug(property.toString());
+			if (property.get("name").asText()
+				.equals("mapreduce.output.fileoutputformat.outputdir")) {
+				String value = property.get("value").asText();
+				outputDir = value.substring(value.lastIndexOf("/") + 1, value.length());
+				break;
+			}
 		}
-		return null;
+		log.info("Output dir is: {} ", outputDir);
+		return outputDir;
 	}
 	
 	private JsonNode getFileStatus(CloseableHttpResponse response) 
