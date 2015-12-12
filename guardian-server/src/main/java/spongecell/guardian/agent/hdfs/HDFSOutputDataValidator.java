@@ -138,6 +138,7 @@ public class HDFSOutputDataValidator implements Agent {
 
 			try {
 				JsonNode jobStatus = readJobInfoStatusFile(filePath);
+				getJobOutputDir(jobStatus);
 			} catch (IllegalStateException | IOException | URISyntaxException e) {
 				log.error("Failed to read job status: {} ", e);
 				throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
@@ -247,6 +248,14 @@ public class HDFSOutputDataValidator implements Agent {
 			.writerWithDefaultPrettyPrinter()
 			.writeValueAsString(jobStatus));	
 		return jobStatus;
+	}
+	
+	private JsonNode getJobOutputDir (JsonNode jobStatus) {
+		Iterator<JsonNode> properties = jobStatus.get("conf").get("property").iterator();
+		while (properties.hasNext()) {
+			log.info(properties.next().toString());
+		}
+		return null;
 	}
 	
 	private JsonNode getFileStatus(CloseableHttpResponse response) 
