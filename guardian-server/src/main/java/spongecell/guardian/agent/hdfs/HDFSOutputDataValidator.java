@@ -264,42 +264,55 @@ public class HDFSOutputDataValidator implements Agent {
 					fileSegment)
 			.build();
 
-		try {
-			CloseableHttpResponse response = workFlow.execute();
-			int responseCode = HttpStatus.OK.value();  
-			Assert.isTrue(response.getStatusLine().getStatusCode() == responseCode, 
-				"Response code indicates a failed write: " + 
-				response.getStatusLine().getStatusCode());
-
-//			ArrayNode fileStatus = getFileStatus(response);
-//
-//			facts = createFacts(fileStatus, "/data/test-output1");
-
-		} catch (URISyntaxException e) {
-			throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
-		} 
-//		return facts;	
-//		return null;	
+		ArrayNode fileStatus = null; 
+		CloseableHttpResponse response = null; 
+		do  {
+			try {
+				response = workFlow.execute();
+				int responseCode = HttpStatus.OK.value();  
+				Assert.isTrue(response.getStatusLine().getStatusCode() == responseCode, 
+						"Response code indicates a failed write: " + 
+								response.getStatusLine().getStatusCode());
+				fileStatus = getFileStatus(response);
+				Thread.sleep(2000);
+				//Object[] facts = createFacts(fileStatus, fileName);
+			} catch (URISyntaxException | ParseException | IOException | InterruptedException e) {
+				throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
+			} 
+		} while(fileStatus == null);
 	}
 	
-	private JsonNode getFileStatus(CloseableHttpResponse response) 
+	private ArrayNode getFileStatus(CloseableHttpResponse response) 
 			throws JsonParseException, JsonMappingException, ParseException, IOException {
-		ObjectNode jsonFileStatus = new ObjectMapper().readValue(
+		ObjectNode dirStatus = new ObjectMapper().readValue(
 			EntityUtils.toString(response.getEntity()), 
 			new TypeReference<ObjectNode>() {
 		});
-		log.info("File status is: {} ", new ObjectMapper()
+		log.info("Directory status is: {} ", new ObjectMapper()
 			.writerWithDefaultPrettyPrinter()
-			.writeValueAsString(jsonFileStatus));
+			.writeValueAsString(dirStatus));
 		
-		JsonNode fileStatus = jsonFileStatus.get("FileStatus");
-		Assert.isTrue(fileStatus.get(TYPE).asText().equals(FILE), 
-				"ERROR - cannot read the Node. It is not a file: " 
-				+ fileStatus.get(TYPE).asText());
+		ArrayNode fileStatus  = new ObjectMapper().readValue(dirStatus
+			.get(FILE_STATUSES)
+			.get(FILE_STATUS).toString(),
+			new TypeReference<ArrayNode>() { 
+		});
+		for (int i = 0; i < fileStatus.size(); i++) {
+			JsonNode fileStatusNode = fileStatus.get(i);
+			log.info("File status is: {} ", new ObjectMapper()
+				.writerWithDefaultPrettyPrinter()
+				.writeValueAsString(fileStatusNode));
+			if (fileStatusNode.get("pathSuffix").asText().equals("_temporary")) {
+				return null; 
+			}
+//			Assert.isTrue(fileStatusNode.get(TYPE).asText().equals(FILE), 
+//				"ERROR - cannot read the Node. It is not a file. It is a: " 
+//				+ fileStatusNode.get(TYPE).asText());
+		}		
 		return fileStatus;
-	}	
+	}
 		
-	private Object[] createFacts (ArrayNode fileStatus, String path, Args args) {
+	private Object[] createFacts (ArrayNode fileStatus, String path) {
 		HDFSDirectory hdfsDir = new HDFSDirectory();
 		hdfsDir.setNumChildren(fileStatus.size());
 		hdfsDir.setOwner("root");
@@ -314,9 +327,6 @@ public class HDFSOutputDataValidator implements Agent {
 		SlackGuardianWebHook slackClient = new SlackGuardianWebHook();
 		
 		Object[] facts = { hdfsDir, event, slackClient };
-		args.addArg("hdfsDataValidatorHdfsFact", hdfsDir);
-		args.addArg("hdfsDataValidatorEventFact", event);
-		args.addArg("hdfsDataValidatorSlackClient", slackClient);
 		
 		return facts;
 	}
