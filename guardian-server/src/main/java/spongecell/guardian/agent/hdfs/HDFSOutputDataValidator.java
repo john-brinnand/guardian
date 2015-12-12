@@ -126,38 +126,15 @@ public class HDFSOutputDataValidator implements Agent {
 			.build();
 			
 		log.info("Path parent is: {}", filePath.getFile().getParent());
-		
-		
-//		WebHdfsWorkFlow workFlow = builder
-//			.path(filePath.getFile().getParent())
-//			.addEntry("GetFileStatus", 
-//					WebHdfsOps.GETFILESTATUS, 
-//					HttpStatus.OK, 
-//					jobStatusFileName)
-//			.build();
 
-			try {
-				JsonNode jobStatus = readJobInfoStatusFile(filePath);
-				getJobOutputDir(jobStatus);
-			} catch (IllegalStateException | IOException | URISyntaxException e) {
-				log.error("Failed to read job status: {} ", e);
-				throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
-			}
-			
-//			CloseableHttpResponse response = workFlow.execute();
-//			int responseCode = HttpStatus.OK.value();  
-//			Assert.isTrue(response.getStatusLine().getStatusCode() == responseCode, 
-//					"Response code indicates a failed read : " + 
-//					response.getStatusLine().getStatusCode());
-			
-			// TODO get the output directory from the jobInfoStatusFile and
-			// use it to access the output directory and the files within it.
-//			JsonNode fileStatus = getFileStatus(response);
-			
-			
-//			createFacts(fileStatus, "/data/test-output1", args);
-			
-//		} catch (URISyntaxException | ParseException | IOException e) {
+		try {
+			JsonNode jobStatus = readJobInfoStatusFile(filePath);
+			String outputDir = getJobOutputDir(jobStatus);
+			getOutputFileStatus(outputDir);
+		} catch (IllegalStateException | IOException | URISyntaxException e) {
+			log.error("Failed to read job status: {} ", e);
+			throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
+		}
 		return args;		
 	}	
 	
@@ -224,6 +201,7 @@ public class HDFSOutputDataValidator implements Agent {
 //		}		
 //		return fileStatus;
 //	}
+	
 	/**
 	 * curl -i -L "http://<HOST>:<PORT>/webhdfs/v1/<PATH>?op=OPEN
                     [&offset=<LONG>][&length=<LONG>][&buffersize=<INT>]"
@@ -235,6 +213,7 @@ public class HDFSOutputDataValidator implements Agent {
 	private JsonNode readJobInfoStatusFile(FilePath jobInfoFileStatusPath)
 			throws URISyntaxException, IllegalStateException, IOException {
 		WebHdfsWorkFlow workFlow = builder
+				.clear()
 				.path(jobInfoFileStatusPath.getFile().getParent())
 				.addEntry("OpenReadFile", 
 						WebHdfsOps.OPENANDREAD, 
@@ -259,12 +238,48 @@ public class HDFSOutputDataValidator implements Agent {
 			if (property.get("name").asText()
 				.equals("mapreduce.output.fileoutputformat.outputdir")) {
 				String value = property.get("value").asText();
-				outputDir = value.substring(value.lastIndexOf("/") + 1, value.length());
+				outputDir = value.substring(value.lastIndexOf("/data"), value.length());
 				break;
 			}
 		}
 		log.info("Output dir is: {} ", outputDir);
 		return outputDir;
+	}
+	
+	private void getOutputFileStatus (String fileName) {
+		log.info("********** Getting output-file status.**********");
+		String fileSegment = fileName.substring(
+				fileName.lastIndexOf("/") + 1, fileName.length());
+		log.info("File segment: {} ", fileSegment);
+		int lastIndex = fileName.lastIndexOf("/");
+		String baseDirSegment = fileName.substring(0, lastIndex);
+		log.info("Basedir segment: {} ", baseDirSegment);
+
+		WebHdfsWorkFlow workFlow = builder
+			.clear()
+			.path(baseDirSegment)
+			.addEntry("ListDirectoryStatus", 
+					WebHdfsOps.LISTSTATUS, 
+					HttpStatus.OK, 
+					fileSegment)
+			.build();
+
+		try {
+			CloseableHttpResponse response = workFlow.execute();
+			int responseCode = HttpStatus.OK.value();  
+			Assert.isTrue(response.getStatusLine().getStatusCode() == responseCode, 
+				"Response code indicates a failed write: " + 
+				response.getStatusLine().getStatusCode());
+
+//			ArrayNode fileStatus = getFileStatus(response);
+//
+//			facts = createFacts(fileStatus, "/data/test-output1");
+
+		} catch (URISyntaxException e) {
+			throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
+		} 
+//		return facts;	
+//		return null;	
 	}
 	
 	private JsonNode getFileStatus(CloseableHttpResponse response) 
