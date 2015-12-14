@@ -35,5 +35,5 @@ rule "Slack Notifier"
        	$slackEvent.setValid(Boolean.FALSE)	
        	
         System.out.println("Sending notifications:");
-	    $slackClient.send($slackEvent.getJsonEventMessage(), SlackGuardianWebHook.EMOJI_GHOST);
+	    $slackClient.send($slackEvent.getJsonEventMessage(), SlackGuardianWebHook.EMOJI_WORKFLOW_ONE);
 end

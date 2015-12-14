@@ -30,6 +30,7 @@ public class SlackGuardianWebHookTest extends AbstractTestNGSpringContextTests{
 	private @Autowired SlackGuardianWebHook slackGuardianWebHook;
 	private final static String MESSAGE = "This is posted to #guardian and comes from a bot named guardian.";
 	private final static String EMOJI_GHOST = ":ghost:";
+	private final static String EMOJI_WORKFLOW_ONE = ":workflow-one:";
 
 	@PostConstruct
 	public void postConstruct() throws URISyntaxException, UnsupportedEncodingException {
@@ -37,7 +38,7 @@ public class SlackGuardianWebHookTest extends AbstractTestNGSpringContextTests{
 
 	@Test
 	public void slackGuardianWebHookSend() throws ClientProtocolException, IOException {
-		CloseableHttpResponse response = slackGuardianWebHook.send(MESSAGE, EMOJI_GHOST);
+		CloseableHttpResponse response = slackGuardianWebHook.send(MESSAGE, EMOJI_WORKFLOW_ONE);
 		log.info("Response status code {} ", response.getStatusLine().getStatusCode());
 		Assert.assertEquals(HttpStatus.OK.value(), response.getStatusLine().getStatusCode());
 		response.close();
