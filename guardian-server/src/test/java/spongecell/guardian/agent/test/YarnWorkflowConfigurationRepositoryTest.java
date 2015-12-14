@@ -19,9 +19,9 @@ import org.testng.annotations.Test;
 import spongecell.guardian.agent.workflow.GuardianAgentWorkFlow;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.agent.yarn.YarnAgentConfigurationRegistry;
+import spongecell.guardian.configuration.repository.IGenericConfigurationRepository;
 import spongecell.webhdfs.WebHdfsConfiguration;
 import spongecell.webhdfs.WebHdfsWorkFlow;
-import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 
 
 @Slf4j

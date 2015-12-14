@@ -36,13 +36,13 @@ import spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys;
 import spongecell.guardian.agent.yarn.Agent;
 import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorAgent;
 import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorConfiguration;
+import spongecell.guardian.configuration.repository.IGenericConfigurationRepository;
 import spongecell.webhdfs.FilePath;
 import spongecell.webhdfs.WebHdfsConfiguration;
 import spongecell.webhdfs.WebHdfsOps;
 import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.webhdfs.WebHdfsWorkFlow.Builder;
 import spongecell.webhdfs.exception.WebHdfsException;
-import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;

@@ -34,6 +34,7 @@ import spongecell.guardian.agent.exception.GuardianWorkFlowException;
 import spongecell.guardian.agent.util.Args;
 import spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys;
 import spongecell.guardian.agent.yarn.Agent;
+import spongecell.guardian.configuration.repository.IGenericConfigurationRepository;
 import spongecell.guardian.model.HDFSDirectory;
 import spongecell.guardian.notification.GuardianEvent;
 import spongecell.guardian.notification.SlackGuardianWebHook;
@@ -42,7 +43,6 @@ import spongecell.webhdfs.WebHdfsConfiguration;
 import spongecell.webhdfs.WebHdfsOps;
 import spongecell.webhdfs.WebHdfsWorkFlow;
 import spongecell.webhdfs.WebHdfsWorkFlow.Builder;
-import spongecell.workflow.config.repository.IGenericConfigurationRepository;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
