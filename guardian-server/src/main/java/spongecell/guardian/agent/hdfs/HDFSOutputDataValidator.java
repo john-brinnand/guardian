@@ -246,9 +246,9 @@ public class HDFSOutputDataValidator implements Agent {
 			if (fileStatusNode.get("pathSuffix").asText().equals("_temporary")) {
 				return null; 
 			}
-//			Assert.isTrue(fileStatusNode.get(TYPE).asText().equals(FILE), 
-//				"ERROR - cannot read the Node. It is not a file. It is a: " 
-//				+ fileStatusNode.get(TYPE).asText());
+			Assert.isTrue(fileStatusNode.get(TYPE).asText().equals(FILE), 
+				"ERROR - cannot read the Node. It is not a file. It is a: " 
+				+ fileStatusNode.get(TYPE).asText());
 		}		
 		return fileStatus;
 	}

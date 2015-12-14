@@ -33,6 +33,7 @@ public class SlackGuardianWebHook {
 	private boolean messageSent;
 	private String message;
 	public static final String EMOJI_GHOST = ":ghost:";
+	public static final String TEST_PASSED = ":test-passed:";
 	
 	public SlackGuardianWebHook () {
 		httpClient = HttpClients.createDefault();
