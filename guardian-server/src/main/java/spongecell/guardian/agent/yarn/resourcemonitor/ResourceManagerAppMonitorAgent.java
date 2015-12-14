@@ -95,7 +95,6 @@ public class ResourceManagerAppMonitorAgent implements Agent {
 		int retryCount = 5;
 		do {
 			response = requestResourceManagerAppsStatus();
-			response.getStatusLine().getStatusCode();
 
 			// Get the application's id.
 			// **************************
