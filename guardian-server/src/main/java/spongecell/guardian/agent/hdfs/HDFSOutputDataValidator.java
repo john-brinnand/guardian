@@ -130,7 +130,8 @@ public class HDFSOutputDataValidator implements Agent {
 		try {
 			JsonNode jobStatus = readJobInfoStatusFile(filePath);
 			String outputDir = getJobOutputDir(jobStatus);
-			getOutputFileStatus(outputDir);
+			ArrayNode fileStatus = getOutputFileStatus(outputDir);
+			createFacts(fileStatus, outputDir, args);
 		} catch (IllegalStateException | IOException | URISyntaxException e) {
 			log.error("Failed to read job status: {} ", e);
 			throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
@@ -139,69 +140,9 @@ public class HDFSOutputDataValidator implements Agent {
 	}	
 	
 	public Object[] getStatus(Object[] args) {
-//		log.info("********** Getting HDFS status.**********");
-//		
-//		WebHdfsConfiguration webHdfsConfig = workFlow.getConfig();
-//		Object[] facts =  null;
-//		String path = webHdfsConfig.getBaseDir() + "/" + webHdfsConfig.getFileName();
-//		log.info(path);
-//		
-//		WebHdfsWorkFlow workFlow = builder
-//			.path(path)
-//			.addEntry("ListDirectoryStatus", 
-//					WebHdfsOps.LISTSTATUS, 
-//					HttpStatus.OK, 
-//					webHdfsConfig.getBaseDir())
-//			.build();
-//
-//		try {
-//			CloseableHttpResponse response = workFlow.execute();
-//			int responseCode = HttpStatus.OK.value();  
-//			Assert.isTrue(response.getStatusLine().getStatusCode() == responseCode, 
-//					"Response code indicates a failed write: " + 
-//					response.getStatusLine().getStatusCode());
-//			
-//			JsonNode fileStatus = getFileStatus(response);
-//			log.info("Job Info File Status is: {} ",
-//				new ObjectMapper().writerWithDefaultPrettyPrinter()
-//					.writeValueAsString(fileStatus));
-//			
-//			readJobInfoStatusFile(fileStatus);
-//			
-//			// TODO get the output directory from the jobInfoStatusFile and
-//			// use it to access the output directory and the files within it.
-////			facts = createFacts(fileStatus, "/data/test-output1", new Args());
-//			
-//		} catch (URISyntaxException | ParseException | IOException e) {
-//			throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
-//		} 
 		return null;	
 	}
 
-//	private ArrayNode getFileStatus(CloseableHttpResponse response) 
-//			throws JsonParseException, JsonMappingException, ParseException, IOException {
-//		ObjectNode dirStatus = new ObjectMapper().readValue(
-//			EntityUtils.toString(response.getEntity()), 
-//			new TypeReference<ObjectNode>() {
-//		});
-//		log.info("Directory status is: {} ", new ObjectMapper()
-//			.writerWithDefaultPrettyPrinter()
-//			.writeValueAsString(dirStatus));
-//		
-//		ArrayNode fileStatus  = new ObjectMapper().readValue(dirStatus
-//			.get(FILE_STATUSES)
-//			.get(FILE_STATUS).toString(),
-//			new TypeReference<ArrayNode>() { 
-//		});
-//		for (int i = 0; i < fileStatus.size(); i++) {
-//			JsonNode fileStatusNode = fileStatus.get(i);
-//			Assert.isTrue(fileStatusNode.get(TYPE).asText().equals(FILE), 
-//				"ERROR - cannot read the Node. It is not a file: " 
-//				+ fileStatusNode.get(TYPE).asText());
-//		}		
-//		return fileStatus;
-//	}
-	
 	/**
 	 * curl -i -L "http://<HOST>:<PORT>/webhdfs/v1/<PATH>?op=OPEN
                     [&offset=<LONG>][&length=<LONG>][&buffersize=<INT>]"
@@ -246,7 +187,7 @@ public class HDFSOutputDataValidator implements Agent {
 		return outputDir;
 	}
 	
-	private void getOutputFileStatus (String fileName) {
+	private ArrayNode getOutputFileStatus (String fileName) {
 		log.info("********** Getting output-file status.**********");
 		String fileSegment = fileName.substring(
 				fileName.lastIndexOf("/") + 1, fileName.length());
@@ -275,11 +216,11 @@ public class HDFSOutputDataValidator implements Agent {
 								response.getStatusLine().getStatusCode());
 				fileStatus = getFileStatus(response);
 				Thread.sleep(2000);
-				//Object[] facts = createFacts(fileStatus, fileName);
 			} catch (URISyntaxException | ParseException | IOException | InterruptedException e) {
 				throw new GuardianWorkFlowException("ERROR - HDFS Agent failure", e);
 			} 
 		} while(fileStatus == null);
+		return fileStatus;
 	}
 	
 	private ArrayNode getFileStatus(CloseableHttpResponse response) 
@@ -312,7 +253,7 @@ public class HDFSOutputDataValidator implements Agent {
 		return fileStatus;
 	}
 		
-	private Object[] createFacts (ArrayNode fileStatus, String path) {
+	private void createFacts (ArrayNode fileStatus, String path, Args args) {
 		HDFSDirectory hdfsDir = new HDFSDirectory();
 		hdfsDir.setNumChildren(fileStatus.size());
 		hdfsDir.setOwner("root");
@@ -326,9 +267,9 @@ public class HDFSOutputDataValidator implements Agent {
 		
 		SlackGuardianWebHook slackClient = new SlackGuardianWebHook();
 		
-		Object[] facts = { hdfsDir, event, slackClient };
-		
-		return facts;
+		args.addArg("hdfsDir", hdfsDir);
+		args.addArg("event", event);
+		args.addArg("slackClient", slackClient);
 	}
 	
 	@Override

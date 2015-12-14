@@ -84,9 +84,7 @@ public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSprin
 	 * running on a hadoop cluster. This, in turn, implies
 	 * that the local hadoop cluster must have data.
 	 * 
-	 * The number of iterations (maxCount) is determined empirically
-	 * such that the job or jobs will complete prior to the test. This
-	 * value can be fine tuned to the type of MapReduce jobs being run.
+	 * This test runs continuously and must be started and stopped manually. 
 	 * 
 	 * @throws URISyntaxException
 	 * @throws InterruptedException
@@ -108,13 +106,9 @@ public class YarnWorkflowConfigurationRepositoryTest extends AbstractTestNGSprin
 			workFlow.addEntry("step" + stepCount, agent);
 			stepCount++;
 		}
-		int count = 0;
-		int maxCount = 15;
 		do  {
 			workFlow.execute();
 			Thread.sleep(1000);
-			count++;
 		} while (true);
-//		} while (count < maxCount);
 	}	
 }
