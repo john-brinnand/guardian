@@ -9,6 +9,9 @@ public class GuardianAgentWorkFlowKeys {
 	public static final String WORKFLOW = "workFlow";
 	public static final String WORKFLOW_ID = "workFlowId";
 	public static final String AGENT_IDS = "agentIds";
+	public static final String REGISTRY_ID = "registryId";
+	public static final String REGISTRY_CLAZZ_NAME = "registryClazzName";
+	public static final String WORKFLOW_CLAZZ_NAME = "workFlowClazzName";
 	public static final String OP = "op";
 	public static final String CREATE = "create";
 	public static final String STEP = "step";

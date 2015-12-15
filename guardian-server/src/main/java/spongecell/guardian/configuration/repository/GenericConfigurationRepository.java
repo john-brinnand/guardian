@@ -21,7 +21,6 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import spongecell.workflow.config.framework.BeanConfigurations;
 
 @Getter @Setter
 @Slf4j

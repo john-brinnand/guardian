@@ -12,14 +12,18 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 
+import spongecell.guardian.configuration.repository.BeanConfigurations;
 import spongecell.guardian.configuration.repository.GenericConfigurationRepository;
 import spongecell.webhdfs.WebHdfsConfiguration;
 import spongecell.webhdfs.WebHdfsWorkFlow;
-import spongecell.workflow.config.framework.BeanConfigurations;
 
 @Slf4j
 @Getter @Setter
-@EnableConfigurationProperties(GenericConfigurationRepository.class)
+@EnableConfigurationProperties({
+	GenericConfigurationRepository.class,
+	WebHdfsConfiguration.class,
+	WebHdfsWorkFlow.Builder.class
+})
 public class HDFSOutputDataValidatorRegistry {
 	private @Autowired GenericConfigurationRepository configRepo;
 

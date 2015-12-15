@@ -1,10 +1,19 @@
-package spongecell.guardian.test;
+package spongecell.guardian.resource.test;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.CREATE;
+import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.OP;
+import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.REGISTRY_CLAZZ_NAME;
+import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.WORKFLOW;
+import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.WORKFLOW_CLAZZ_NAME;
+
+import javax.annotation.PostConstruct;
+
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
@@ -18,14 +27,17 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import spongecell.guardian.agent.workflow.GuardianAgentWorkFlow;
+import spongecell.guardian.agent.yarn.YarnAgentConfigurationRegistry;
+import spongecell.guardian.application.GuardianApplication;
 import spongecell.guardian.application.GuardianResourceConfiguration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.*;
 
 /**
  * Notes: @WebAppConfiguration sets up, among other things,
@@ -44,13 +56,40 @@ import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.*;
 @EnableAutoConfiguration
 @EnableWebMvc
 @WebAppConfiguration
-@ContextConfiguration(classes = { spongecell.guardian.application.GuardianApplication.class })
+@ContextConfiguration(classes = { 
+	GuardianApplication.class,
+	GuardianAgentWorkFlow.class
+})
 public class GuardianResourceTest extends AbstractTestNGSpringContextTests {
 	private String data;
 	private final static String BASE_URI = "/v1/guardian";
 	private final static String PING = "ping";
 	@Autowired WebApplicationContext wac;
 	@Autowired GuardianResourceConfiguration config;
+	@Autowired ApplicationContext ctx;
+	@Autowired GuardianAgentWorkFlow workFlow;
+	private static final String GROUP_ID = "spongecell";
+	private static final String ARTIFACT_ID = "heston-alpha-agent";
+	private static final String VERSION_ID = "0.0.1-SNAPSHOT";
+	private static final String MODULE_ID = "heston-alpha-module";
+	private static final String SESSION_ID = "heston-alpha-session";
+	
+	@BeforeClass
+	public void init () {
+		Assert.assertNotNull(workFlow.getKieMFSessionHandler());
+		log.info("Building the session.");
+		
+		// Simulate how the guardian resource
+		// will build rules.
+		//************************************
+		workFlow.newSessionBuilder()
+			.groupId(GROUP_ID)
+			.artifactId(ARTIFACT_ID)
+			.versionId(VERSION_ID)
+			.moduleId(MODULE_ID)
+			.sessionId(SESSION_ID)
+			.build();		
+	}
 
 	@Test(priority = 1, groups = "integration")
 	public void validateEventHandlerPing() throws Exception {
@@ -74,22 +113,17 @@ public class GuardianResourceTest extends AbstractTestNGSpringContextTests {
 				.getContentAsString());
 		Assert.assertEquals(mvcResult.getResponse().getContentAsString(), data);
 	}
-	
+
 	@Test(priority = 1, groups = "integration")
-	public void validatePostRequestParams() throws Exception {
+	public void validateResourceGuardianWorkFlow() throws Exception {
 		MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
-		final String yarnResourceManagerAgent = "yarnResourceManagerAgent";
-		final String hdfsListDirectoryAgent = "hdfsListDirectoryAgent";
-		final String separator = ",";
 		
-		final StringBuffer agentIds =  new StringBuffer()
-			.append(yarnResourceManagerAgent)
-			.append(separator)
-			.append(hdfsListDirectoryAgent);
-		
+		final String registryClazz = YarnAgentConfigurationRegistry.class.getName();
+		final String workFlowClazz = GuardianAgentWorkFlow.class.getName();
+			
 		ObjectNode dataNode =  new ObjectMapper().createObjectNode();
-		dataNode.with(WORKFLOW).put(WORKFLOW_ID, "guardianAgentWorkFlow"); 
-		dataNode.with(WORKFLOW).put(AGENT_IDS, agentIds.toString()); 
+		dataNode.with(WORKFLOW).put(REGISTRY_CLAZZ_NAME, registryClazz); 
+		dataNode.with(WORKFLOW).put(WORKFLOW_CLAZZ_NAME, workFlowClazz); 
 		log.info(dataNode.toString());
 		
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -110,7 +144,43 @@ public class GuardianResourceTest extends AbstractTestNGSpringContextTests {
 //		Assert.assertEquals(mvcResult.getResponse().getContentAsString(),
 //				"WorkFlow guardianAgentWorkFlow has been scheduled to run.");
 //		
-		Thread.sleep(90000);
+		while (true) {
+			log.debug(".....running.");
+			Thread.sleep(90000);
+		}
+	}		
+	
+	@Test(priority = 1, groups = "integration")
+	public void validatePostRequestParams() throws Exception {
+		MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
+		
+		final String registryClazz = YarnAgentConfigurationRegistry.class.getName();
+		final String workFlowClazz = "guardianAgentWorkFlow";
+			
+		ObjectNode dataNode =  new ObjectMapper().createObjectNode();
+		dataNode.with(WORKFLOW).put(REGISTRY_CLAZZ_NAME, registryClazz); 
+		dataNode.with(WORKFLOW).put(WORKFLOW_CLAZZ_NAME, workFlowClazz); 
+		log.info(dataNode.toString());
+		
+		MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+				.post(BASE_URI);
+		request.contentType(MediaType.ALL_VALUE);
+		request.content(dataNode.toString());
+		request.param(OP, CREATE);
+
+		ResultActions actions = mockMvc.perform(request);
+		actions.andDo(print());
+
+		MvcResult mvcResult = actions.andReturn();
+
+		log.info("Raw Response - type is {} content is: {} ", mvcResult
+				.getResponse().getContentType(), mvcResult.getResponse()
+				.getContentAsString());
+		
+		while (true) {
+			log.debug(".....running.");
+			Thread.sleep(90000);
+		}	
 	}	
 	
 	@Test(priority = 1, groups = "integration")

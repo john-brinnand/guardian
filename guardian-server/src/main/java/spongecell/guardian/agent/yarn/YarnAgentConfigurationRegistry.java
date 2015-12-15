@@ -19,9 +19,9 @@ import spongecell.guardian.agent.yarn.jobinfo.ResourceManagerMapReduceJobInfoAge
 import spongecell.guardian.agent.yarn.jobinfo.ResourceManagerMapReduceJobInfoRegistry;
 import spongecell.guardian.agent.yarn.resourcemonitor.ResourceManagerAppMonitorAgent;
 import spongecell.guardian.agent.yarn.resourcemonitor.ResourceMonitorAppAgentRegistry;
+import spongecell.guardian.configuration.repository.BeanConfigurations;
 import spongecell.guardian.configuration.repository.GenericConfigurationRepository;
 import spongecell.guardian.configuration.repository.IGenericConfigurationRepository;
-import spongecell.workflow.config.framework.BeanConfigurations;
 
 
 @Getter

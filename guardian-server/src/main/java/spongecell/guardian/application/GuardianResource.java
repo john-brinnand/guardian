@@ -1,7 +1,16 @@
 package spongecell.guardian.application;
 
+import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.CREATE;
+import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.OP;
+import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.REGISTRY_CLAZZ_NAME;
+import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.WORKFLOW;
+import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.WORKFLOW_CLAZZ_NAME;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 import javax.annotation.PreDestroy;
@@ -9,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -21,18 +31,20 @@ import org.springframework.web.bind.annotation.RestController;
 
 import spongecell.guardian.agent.exception.GuardianWorkFlowException;
 import spongecell.guardian.agent.scheduler.GuardianWorkFlowScheduler;
+import spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.STATUS;
 import spongecell.guardian.agent.workflow.IAgentWorkFlow;
 import spongecell.guardian.agent.yarn.Agent;
+import spongecell.guardian.configuration.repository.IGenericConfigurationRepository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static spongecell.guardian.agent.workflow.GuardianAgentWorkFlowKeys.*;
-
 @Slf4j
 @RestController
 @RequestMapping("/v1/guardian")
-@EnableConfigurationProperties({GuardianWorkFlowScheduler.class})
+@EnableConfigurationProperties({ 
+	GuardianWorkFlowScheduler.class,
+})
 public class GuardianResource {
 	@Autowired private GuardianWorkFlowScheduler scheduler;
 	@Autowired private ApplicationContext appContext;
@@ -124,31 +136,45 @@ public class GuardianResource {
 		return buf.toString(); 
 	}
 	
+	/**
+	 * Build a workflow.
+	 * 
+	 * @param body
+	 * @return
+	 */
 	private IAgentWorkFlow buildWorkFlow(String body) {
+		IGenericConfigurationRepository repo =  null;
+		IAgentWorkFlow workFlow = null;
 		ObjectMapper om = new ObjectMapper();
-		IAgentWorkFlow workFlow = null; 
+		JsonNode node;
 		try {
-			JsonNode node = om.readTree(body);
-			String workFlowId = node.get(WORKFLOW).get(WORKFLOW_ID).asText(); 
-			workFlow = (IAgentWorkFlow) appContext.getBean(workFlowId);
-			workFlow.setId(workFlowId);
+			node = om.readTree(body);
+		} catch (IOException e1) {
+			throw new GuardianWorkFlowException("ERROR - workflow was not built: ", e1);
+		}
+		String registryClazz = node.get(WORKFLOW).get(REGISTRY_CLAZZ_NAME).asText(); 
+		String workFlowClazz = node.get(WORKFLOW).get(WORKFLOW_CLAZZ_NAME).asText(); 
+
+		try {
+			repo = (IGenericConfigurationRepository) appContext.getBean(
+					Class.forName(registryClazz).newInstance().getClass());
+			workFlow = (IAgentWorkFlow) appContext.getBean(workFlowClazz);
 			
-			String[] agentIds = node
-				.get(WORKFLOW)
-				.get(AGENT_IDS).asText()
-				.split(COMMA);
-			
-			int count = 0;
-			String step = STEP;
-			for (String agentId : agentIds) {
-				Agent agent = (Agent) appContext.getBean(agentId);
-				step = step + count;
-				workFlow.addEntry(step, agent);
-				count++;
+			Iterator<Entry<String, ArrayList<String>>> entries = repo.agentIterator();
+			int stepCount = 1;
+			while (entries.hasNext()) {
+				Entry<String, ArrayList<String>> entry = entries.next();
+				log.info("Entry - name {}, value {}", 
+						entry.getKey(), entry.getValue());
+				Agent agent = (Agent) appContext.getBean(entry.getKey());
+				workFlow.addEntry("step" + stepCount, agent);
+				stepCount++;
 			}	
-		} catch (IOException e) {
-			throw new GuardianWorkFlowException("ERROR building workflow: ", e);
-		} 
-		return workFlow;
+		} catch (BeansException | InstantiationException
+				| IllegalAccessException | ClassNotFoundException e) {
+			log.info("ERROR - creating workflow");
+			throw new GuardianWorkFlowException("ERROR - workflow not created: ", e);
+		}
+		return workFlow;		
 	}
 }
